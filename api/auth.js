@@ -1,62 +1,61 @@
-// backend/routes/auth.js
+// api/auth.js
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const pool = require('../db');
-const router = express.Router();
+// Correctly points to the db.js file outside the /api folder
+const pool = require('../backend/db'); 
 
-// --- User Registration (Updated for new student fields) ---
-router.post('/register', async (req, res) => {
-    // Now includes roll_number and enrollment_number from the form
+// Create an Express app for this serverless function
+const app = express();
+app.use(express.json());
+
+// --- User Registration (Updated for PostgreSQL) ---
+app.post('/api/auth/register', async (req, res) => {
     const { id, name, email, password, role, roll_number, enrollment_number } = req.body;
     
     try {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // This query now includes the new fields, setting them to NULL if not provided (for teachers)
-        await pool.query(
-            'INSERT INTO users (id, name, email, password, role, roll_number, enrollment_number) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [id, name, email, hashedPassword, role, roll_number || null, enrollment_number || null]
-        );
+        // CORRECTED: Uses PostgreSQL's $1, $2, ... placeholder syntax
+        const query = 'INSERT INTO users (id, name, email, password, role, roll_number, enrollment_number) VALUES ($1, $2, $3, $4, $5, $6, $7)';
+        const values = [id, name, email, hashedPassword, role, roll_number || null, enrollment_number || null];
+        
+        await pool.query(query, values);
         
         res.status(201).json({ message: 'User registered successfully!' });
 
     } catch (error) {
         console.error(error);
-        if (error.code === 'ER_DUP_ENTRY') {
+        // CORRECTED: Uses PostgreSQL's unique violation error code
+        if (error.code === '23505') { 
             return res.status(409).json({ error: 'Email or ID already exists.' });
         }
         res.status(500).json({ error: 'Server error during registration.' });
     }
 });
 
-// --- Role-Specific Login Logic (Helper Function) ---
-// This central function handles the login process for any role.
+// --- Role-Specific Login Logic (Updated for PostgreSQL) ---
 const handleLogin = async (req, res, expectedRole) => {
     const { email, password } = req.body;
     try {
-        const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-        const user = rows[0];
+        // CORRECTED: Uses PostgreSQL's $1 placeholder and result handling
+        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        const user = result.rows[0];
 
-        // Check 1: Does the user exist?
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials or user not found.' });
         }
         
-        // Check 2: THIS IS THE SECURITY FIX. Does the user's role match the login portal?
-        // (e.g., a student cannot log in via the /teacher/login route)
         if (user.role !== expectedRole) {
             return res.status(403).json({ error: `Access denied. Please use the '${user.role}' login portal.` });
         }
 
-        // Check 3: Does the password match?
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ error: 'Invalid credentials.' });
         }
 
-        // If all checks pass, create the token
         const payload = { user: { id: user.id, role: user.role, name: user.name } };
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
@@ -68,10 +67,9 @@ const handleLogin = async (req, res, expectedRole) => {
     }
 };
 
-// --- NEW SEPARATE LOGIN ROUTES ---
-// The old generic '/login' route is gone. We now have two specific routes.
-// Your frontend must call the correct one based on the login page.
-router.post('/teacher/login', (req, res) => handleLogin(req, res, 'teacher'));
-router.post('/student/login', (req, res) => handleLogin(req, res, 'student'));
+// --- Separate Login Routes for the Express App ---
+app.post('/api/auth/teacher/login', (req, res) => handleLogin(req, res, 'teacher'));
+app.post('/api/auth/student/login', (req, res) => handleLogin(req, res, 'student'));
 
-module.exports = router;
+// Export the app for Vercel to use
+module.exports = app;

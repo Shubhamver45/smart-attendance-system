@@ -2,14 +2,16 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 
+// This code is configured specifically for Vercel Postgres.
+// It uses the POSTGRES_URL environment variable that Vercel automatically provides.
 const pool = new Pool({
-    // This connectionString will be provided automatically by Render
-    connectionString: process.env.DATABASE_URL,
-    // If you are using Render's free tier, SSL is required
+    connectionString: process.env.POSTGRES_URL,
+    // Vercel requires SSL for its database connections.
     ssl: {
         rejectUnauthorized: false
     }
 });
 
-console.log('Database connection pool created for PostgreSQL.');
+console.log('Database connection pool created for Vercel PostgreSQL.');
+
 module.exports = pool;

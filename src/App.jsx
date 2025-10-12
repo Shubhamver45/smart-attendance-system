@@ -3,9 +3,9 @@ import { Navbar } from './components/Navbar';
 import { LandingPage } from './pages/LandingPage';
 import { TeacherLoginPage, TeacherRegisterPage, StudentLoginPage, StudentRegisterPage } from './pages/AuthPages';
 import { TeacherDashboard, AttendanceReportsPage, CreateLecturePage } from './pages/TeacherPages';
-// CORRECTED: Import the new ScanQRCodePage and remove the old MarkAttendancePage if it's no longer used
 import { StudentDashboard, ScanQRCodePage, ViewSchedulePage } from './pages/StudentPages';
 
+// Use the Vercel environment variable, with a fallback for local development
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export default function App() {
@@ -48,28 +48,33 @@ export default function App() {
         }
     }, [user, notificationPermission]);
 
-    // --- DATA FETCHING LOGIC (CORRECTED) ---
+    // --- DATA FETCHING LOGIC (COMPLETE) ---
     const fetchDataForUser = async (userData, userToken, lectureIdFromUrl = null) => {
         try {
-            let res;
+            let lectureRes;
             if (userData.role === 'teacher') {
-                res = await fetch(`${API_URL}/teacher/lectures/${userData.id}`, { headers: { 'Authorization': `Bearer ${userToken}` } });
+                lectureRes = await fetch(`${API_URL}/teacher/lectures/${userData.id}`, { headers: { 'Authorization': `Bearer ${userToken}` } });
             } else { // Student role
-                // THIS IS THE FIX: It now correctly fetches lectures for students.
-                res = await fetch(`${API_URL}/student/lectures`, { headers: { 'Authorization': `Bearer ${userToken}` } });
+                // Fetch all available lectures
+                lectureRes = await fetch(`${API_URL}/student/lectures`, { headers: { 'Authorization': `Bearer ${userToken}` } });
+                
+                // Also fetch the student's personal attendance history
+                const attendanceRes = await fetch(`${API_URL}/student/attendance/${userData.id}`, { headers: { 'Authorization': `Bearer ${userToken}` } });
+                if (attendanceRes.ok) {
+                    const attendanceData = await attendanceRes.json();
+                    setAttendanceRecords(attendanceData);
+                }
             }
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to fetch data');
-            setLectures(data);
+            const lectureData = await lectureRes.json();
+            if (!lectureRes.ok) throw new Error(lectureData.error || 'Failed to fetch lectures');
+            setLectures(lectureData);
 
+            // Handle QR code scan redirection after data is loaded
             if (lectureIdFromUrl && userData.role === 'student') {
-                const lectureToAttend = data.find(l => l.id === parseInt(lectureIdFromUrl));
+                const lectureToAttend = lectureData.find(l => l.id === parseInt(lectureIdFromUrl));
                 if (lectureToAttend) {
-                    setActiveLecture(lectureToAttend);
-                    // Since geo-fencing is removed, we can simplify this flow.
-                    // For now, let's go to the dashboard with a notification.
                     setLectureNotification(lectureToAttend);
-                    setView('studentDashboard');
+                    setView('studentDashboard'); // Show notification on dashboard first
                 } else {
                     setView('studentDashboard');
                 }
@@ -78,6 +83,7 @@ export default function App() {
             }
         } catch (error) {
             console.error("Error fetching data:", error);
+            alert("Could not fetch initial data from the server.");
         }
     };
     
@@ -90,14 +96,9 @@ export default function App() {
         }
     };
 
-    // CORRECTED: This now uses the role-specific login routes
     const handleLogin = async (email, password, role) => {
         try {
-            const res = await fetch(`${API_URL}/auth/${role}/login`, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ email, password }) 
-            });
+            const res = await fetch(`${API_URL}/auth/${role}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Login failed');
             
@@ -105,7 +106,7 @@ export default function App() {
             localStorage.setItem('user', JSON.stringify(data.user));
             setToken(data.token);
             setUser(data.user);
-
+            
             const pendingLectureId = localStorage.getItem('pendingLectureId');
             await fetchDataForUser(data.user, data.token, pendingLectureId);
             if (pendingLectureId) localStorage.removeItem('pendingLectureId');
@@ -146,7 +147,6 @@ export default function App() {
         }
     };
     
-    // CORRECTED: This now takes lectureId from the scanner and has no geo-fencing.
     const markAttendance = async (lectureId) => {
         try {
             const res = await fetch(`${API_URL}/student/mark-attendance`, { 
@@ -158,10 +158,10 @@ export default function App() {
             if (!res.ok) throw new Error(data.error || 'Failed to mark attendance');
 
             setAttendanceRecords(prev => [...prev, { id: data.newRecordId, lectureId, studentId: user.id, status: 'present', timestamp: new Date().toISOString() }]);
-            return true; // Return success
+            return true;
         } catch (error) {
             alert(`Attendance Failed: ${error.message}`);
-            return false; // Return failure
+            return false;
         }
     };
 
@@ -176,7 +176,7 @@ export default function App() {
     const handleAttendFromNotification = (lecture) => {
         if (lecture) {
             setActiveLecture(lecture);
-            setView('scanQRCode'); // Go to the scanner page
+            setView('scanQRCode');
         }
         setLectureNotification(null);
     };
@@ -187,15 +187,12 @@ export default function App() {
 
         if (user) {
             switch (view) {
-                case 'teacherDashboard': return <TeacherDashboard user={user} setView={setView} lectures={lectures} activeLecture={activeLecture} setActiveLecture={handleSetActiveLecture} attendanceRecords={attendanceRecords} allStudents={registeredStudents} token={token} />;
-                case 'reports': return <AttendanceReportsPage setView={setView} lectures={lectures} token={token} teacherId={user.id} />;
+                case 'teacherDashboard': return <TeacherDashboard user={user} setView={setView} lectures={lectures} activeLecture={activeLecture} setActiveLecture={handleSetActiveLecture} token={token} />;
+                case 'reports': return <AttendanceReportsPage setView={setView} lectures={lectures} teacherId={user.id} token={token} />;
                 case 'createLecture': return <CreateLecturePage setView={setView} addLecture={addLecture} setActiveLecture={handleSetActiveLecture} />;
-                
-                // UPDATED: Now renders the new ScanQRCodePage
-                case 'studentDashboard': return <StudentDashboard user={user} setView={setView} lectures={lectures} attendanceRecords={attendanceRecords.filter(r => r.studentId === user.id)} lectureNotification={lectureNotification} onAttendNow={handleAttendFromNotification} />;
+                case 'studentDashboard': return <StudentDashboard user={user} setView={setView} lectures={lectures} attendanceRecords={attendanceRecords} lectureNotification={lectureNotification} onAttendNow={handleAttendFromNotification} />;
                 case 'scanQRCode': return <ScanQRCodePage setView={setView} markAttendance={markAttendance} />;
                 case 'viewSchedule': return <ViewSchedulePage lectures={lectures} />;
-                
                 default: setView(user.role === 'teacher' ? 'teacherDashboard' : 'studentDashboard'); return null;
             }
         }
