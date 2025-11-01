@@ -5,7 +5,8 @@ const app = express();
 app.use(express.json());
 
 // --- Create a new lecture and generate a QR code URL (UPDATED for Supabase) ---
-app.post('/api/teacher/lectures', async (req, res) => {
+// THIS IS THE FIX: The route is now relative: '/lectures'
+app.post('/lectures', async (req, res) => {
     const { name, subject, time, teacher_id } = req.body;
     try {
         const { data, error } = await supabase
@@ -31,7 +32,8 @@ app.post('/api/teacher/lectures', async (req, res) => {
 });
 
 // --- Get all lectures for a specific teacher (UPDATED for Supabase) ---
-app.get('/api/teacher/lectures/:teacherId', async (req, res) => {
+// THIS IS THE FIX: The route is now relative: '/lectures/:teacherId'
+app.get('/lectures/:teacherId', async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('lectures')
@@ -54,7 +56,8 @@ app.get('/api/teacher/lectures/:teacherId', async (req, res) => {
 });
 
 // --- Get Defaulter Report (< 75%) (UPDATED for Supabase RPC) ---
-app.get('/api/teacher/reports/defaulters/:teacherId', async (req, res) => {
+// THIS IS THE FIX: The route is now relative: '/reports/defaulters/:teacherId'
+app.get('/reports/defaulters/:teacherId', async (req, res) => {
     try {
         // This calls the 'get_defaulters' function you created in the Supabase SQL Editor
         const { data, error } = await supabase.rpc('get_defaulters', {
@@ -77,7 +80,8 @@ app.get('/api/teacher/reports/defaulters/:teacherId', async (req, res) => {
 });
 
 // --- GET live attendance records for an active lecture (UPDATED for Supabase) ---
-app.get('/api/teacher/lectures/:lectureId/attendance', async (req, res) => {
+// THIS IS THE FIX: The route is now relative: '/lectures/:lectureId/attendance'
+app.get('/lectures/:lectureId/attendance', async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('attendance')

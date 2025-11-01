@@ -6,7 +6,8 @@ const app = express();
 app.use(express.json());
 
 // --- Mark Attendance (UPDATED for Supabase) ---
-app.post('/api/student/mark-attendance', async (req, res) => {
+// THIS IS THE FIX: The route is now relative: '/mark-attendance'
+app.post('/mark-attendance', async (req, res) => {
     // Geo-fencing is removed, we only need lectureId and studentId
     const { lectureId, studentId } = req.body; 
 
@@ -45,7 +46,8 @@ app.post('/api/student/mark-attendance', async (req, res) => {
 });
 
 // --- GET All Lectures for a Student (UPDATED for Supabase) ---
-app.get('/api/student/lectures', async (req, res) => {
+// THIS IS THE FIX: The route is now relative: '/lectures'
+app.get('/lectures', async (req, res) => {
     try {
         // CORRECTED: Uses Supabase's relational query syntax
         // This fetches all columns from 'lectures' and the 'name' from the related 'users' table
@@ -73,7 +75,8 @@ app.get('/api/student/lectures', async (req, res) => {
 });
 
 // --- GET a specific student's attendance history (UPDATED for Supabase) ---
-app.get('/api/student/attendance/:studentId', async (req, res) => {
+// THIS IS THE FIX: The route is now relative: '/attendance/:studentId'
+app.get('/attendance/:studentId', async (req, res) => {
     try {
         const { studentId } = req.params;
         
