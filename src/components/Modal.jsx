@@ -1,5 +1,6 @@
 import React from 'react';
-import { XIcon } from './Icons';
+// Updated import path to be explicit
+import { XIcon } from './Icons.jsx';
 
 export const Modal = ({ isOpen, onClose, title, children }) => {
     if (!isOpen) return null;

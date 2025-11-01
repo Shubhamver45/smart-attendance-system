@@ -16,3 +16,10 @@ body {
 .animate-fadeInUp {
     animation: fadeInUp 0.3s ease-out;
 }
+
+/* THIS IS THE FIX FOR THE QR SCANNER:
+  It makes sure the scanner's border is always visible.
+*/
+#reader div[style*="border-color: rgb(255, 255, 255)"] {
+    border-color: #052659 !important;
+}

@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-// Assuming your components are in src/components/
-import { InputField } from '../components/InputField'; 
+// CORRECTED: Added .jsx extension
+import { InputField } from '../components/InputField.jsx'; 
 import { 
     ArrowLeftIcon, 
     UserIcon, 
     MailIcon, 
     LockIcon, 
+    BookOpenIcon, 
     GraduationCapIcon 
-} from '../components/Icons';
+// CORRECTED: Added .jsx extension
+} from '../components/Icons.jsx';
 
 // Reusable component for the form container
 const AuthFormContainer = ({ children, title, subtitle, icon }) => (
@@ -41,8 +43,7 @@ export const TeacherLoginPage = ({ setView, onLogin }) => {
 
     const handleLogin = (e) => {
         e.preventDefault();
-        // THIS IS THE FIX: Pass the 'teacher' role to the login handler
-        onLogin(email, password, 'teacher');
+        onLogin(email, password, 'teacher'); // Passes the role to App.jsx
     };
 
     return (
@@ -92,8 +93,7 @@ export const StudentLoginPage = ({ setView, onLogin }) => {
 
     const handleLogin = (e) => {
         e.preventDefault();
-        // THIS IS THE FIX: Pass the 'student' role to the login handler
-        onLogin(email, password, 'student');
+        onLogin(email, password, 'student'); // Passes the role to App.jsx
     };
 
     return (
@@ -111,7 +111,6 @@ export const StudentLoginPage = ({ setView, onLogin }) => {
 };
 
 export const StudentRegisterPage = ({ setView, onRegister }) => {
-    // THIS IS THE FIX: Added roll_number and enrollment_number to the state
     const [formData, setFormData] = useState({ id: '', name: '', email: '', password: '', role: 'student', roll_number: '', enrollment_number: '' });
     const handleChange = (e) => setFormData({...formData, [e.target.id]: e.target.value});
     
@@ -125,7 +124,6 @@ export const StudentRegisterPage = ({ setView, onRegister }) => {
             <AuthFormContainer icon={<GraduationCapIcon className="w-8 h-8" />} title="Student Registration" subtitle="Create your account to get started">
                  <form className="space-y-4" onSubmit={handleSubmit}>
                     <InputField id="name" label="Full Name" type="text" placeholder="Enter your full name" icon={<UserIcon className="w-5 h-5"/>} value={formData.name} onChange={handleChange} />
-                    {/* THIS IS THE FIX: Added the new input fields to the form */}
                     <InputField id="roll_number" label="Roll Number" type="text" placeholder="Enter your roll number" icon={<UserIcon className="w-5 h-5"/>} value={formData.roll_number} onChange={handleChange} />
                     <InputField id="enrollment_number" label="Enrollment Number" type="text" placeholder="Enter your enrollment number" icon={<UserIcon className="w-5 h-5"/>} value={formData.enrollment_number} onChange={handleChange} />
                     <InputField id="id" label="Student ID" type="text" placeholder="e.g., mit263" icon={<UserIcon className="w-5 h-5"/>} value={formData.id} onChange={handleChange} />

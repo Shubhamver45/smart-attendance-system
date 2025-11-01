@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode'; // Import the new scanner package
-import { CalendarIcon, MapPinIcon, QrCodeIcon, CalendarDaysIcon } from '../components/Icons';
+// CORRECTED: Added .jsx extensions to imports
+import { CalendarIcon, MapPinIcon, QrCodeIcon, CalendarDaysIcon } from '../components/Icons.jsx';
 
 // Internal sub-component for StudentDashboard stats
 const StatCard = ({ title, value, subtitle, color }) => {
@@ -27,8 +28,7 @@ export const StudentDashboard = ({ setView, lectures, attendanceRecords, lecture
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                         <div><p className="font-bold">Attendance is Open!</p><p>Your teacher has started attendance for: <strong>{lectureNotification.name}</strong>.</p></div>
                         <div className="flex items-center gap-4 w-full md:w-auto">
-                            {/* THIS IS THE FIX: This now correctly sets the active lecture and changes the view */}
-                            <button onClick={() => onAttendNow(lectureNotification)} className="flex-1 bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600">Mark Now</button>
+                            <button onClick={() => onAttendNow(lectureNotification)} className="flex-1 bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600">Scan Now</button>
                             <button onClick={() => onAttendNow(null)} className="font-bold text-2xl text-blue-500 hover:text-blue-700">&times;</button>
                         </div>
                     </div>
@@ -43,7 +43,6 @@ export const StudentDashboard = ({ setView, lectures, attendanceRecords, lecture
             <div className="bg-white/80 p-6 rounded-2xl shadow-lg mb-8">
                 <h3 className="text-xl font-bold mb-4">Quick Actions</h3>
                 <div className="flex flex-col sm:flex-row gap-4">
-                    {/* THIS IS THE FIX: The "Mark Attendance" button now opens the scanner page */}
                     <button onClick={() => setView('scanQRCode')} className="flex-1 bg-[#052659] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#021024]">Scan QR Code</button>
                     <button onClick={() => setView('viewSchedule')} className="flex-1 bg-[#7DA0CA] text-[#021024] font-bold py-3 px-6 rounded-lg hover:bg-[#5483B3]">View Schedule</button>
                 </div>
@@ -60,7 +59,7 @@ export const StudentDashboard = ({ setView, lectures, attendanceRecords, lecture
     );
 };
 
-// NEW AND CORRECTED: This is the in-app QR code scanner page
+// CORRECTED: This page now correctly parses the URL from the QR code.
 export const ScanQRCodePage = ({ setView, markAttendance }) => {
     const [scanResult, setScanResult] = useState(null);
 
@@ -74,40 +73,42 @@ export const ScanQRCodePage = ({ setView, markAttendance }) => {
         });
 
         const onScanSuccess = async (decodedText, decodedResult) => {
-            // Stop scanning once a valid code is found to prevent multiple submissions
+            // Stop scanning once a valid code is found
             await scanner.clear();
             
             try {
-                // The QR code contains a JSON string like {"lectureId": 123}
-                const parsedData = JSON.parse(decodedText);
+                // THIS IS THE FIX: The decoded text is a URL, not JSON.
+                // e.g., "https://your-site.vercel.app/attend?lectureId=123"
+                const url = new URL(decodedText);
+                const lectureId = url.searchParams.get('lectureId');
                 
-                if (parsedData.lectureId) {
-                    setScanResult(`Scanned Lecture ID: ${parsedData.lectureId}. Submitting...`);
-                    const success = await markAttendance(parsedData.lectureId); // Pass only the ID
+                if (lectureId) {
+                    setScanResult(`Scanned lecture ${lectureId}. Submitting...`);
+                    const success = await markAttendance(lectureId); // Pass the ID
                     if (success) {
                         setScanResult('Attendance Marked Successfully!');
-                        setTimeout(() => setView('studentDashboard'), 2000); // Go back after 2s
+                        setTimeout(() => setView('studentDashboard'), 2000);
                     } else {
-                        // The markAttendance function in App.jsx shows an alert on failure
+                        // Failure alert is handled by App.jsx, just go back.
                         setView('studentDashboard');
                     }
                 } else {
-                    throw new Error("QR code does not contain a lecture ID.");
+                    throw new Error("QR code does not contain a valid lecture ID.");
                 }
             } catch (e) {
                 console.error(e);
                 setScanResult('Invalid QR Code. Please scan the official lecture QR code.');
-                setTimeout(() => setView('studentDashboard'), 3000); // Go back after 3s
+                setTimeout(() => setView('studentDashboard'), 3000);
             }
         };
 
         const onScanFailure = (error) => {
-            // This function is called frequently when no QR code is in view. We can ignore it.
+            // This function is called frequently, so we don't log anything here.
         };
 
         scanner.render(onScanSuccess, onScanFailure);
 
-        // Cleanup function to ensure the scanner is properly stopped when you leave the page
+        // Cleanup function to stop the scanner
         return () => {
             scanner.clear().catch(error => {
                 console.error("Failed to clear html5-qrcode scanner.", error);
@@ -124,7 +125,7 @@ export const ScanQRCodePage = ({ setView, markAttendance }) => {
                         <p className="text-green-600 font-bold text-lg">{scanResult}</p>
                     </div>
                 ) : (
-                    // This div is the container where the camera view will be rendered by the library
+                    // This div is the container where the camera view will be rendered
                     <div id="reader" className="w-full"></div>
                 )}
                  <button onClick={() => setView('studentDashboard')} className="mt-6 text-slate-600 hover:underline">
@@ -134,8 +135,6 @@ export const ScanQRCodePage = ({ setView, markAttendance }) => {
         </main>
     );
 };
-
-// NOTE: MarkAttendancePage has been removed as it is replaced by ScanQRCodePage.
 
 export const ViewSchedulePage = ({ lectures }) => (
     <main className="p-4 md:p-8 flex flex-col items-center">

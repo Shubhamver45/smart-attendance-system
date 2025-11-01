@@ -9,8 +9,13 @@ export const InputField = ({ id, label, type, placeholder, icon, value, onChange
             <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">{icon}</span>
                 <input
-                    id={id} name={id} type={isPasswordVisible ? 'text' : type}
-                    placeholder={placeholder} value={value} onChange={onChange}
+                    id={id} 
+                    name={id} 
+                    type={isPasswordVisible ? 'text' : type}
+                    placeholder={placeholder} 
+                    value={value} 
+                    onChange={onChange}
+                    required // This attribute is added to ensure the field cannot be empty
                     className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5483B3] transition-all"
                 />
                 {type === 'password' && (

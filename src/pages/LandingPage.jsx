@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Modal } from '../components/Modal';
-import { UserIcon, GraduationCapIcon, BookOpenIcon } from '../components/Icons';
+// CORRECTED: Added .jsx extension
+import { Modal } from '../components/Modal.jsx'; 
+// CORRECTED: Added .jsx extension
+import { UserIcon, GraduationCapIcon, BookOpenIcon } from '../components/Icons.jsx'; 
 
 // This is a sub-component used only by LandingPage
 const RoleCard = ({ icon, title, description, buttonText, onClick, isPrimary }) => (
@@ -37,8 +39,9 @@ export const LandingPage = ({ setView }) => {
         
         <main className="flex flex-col items-center justify-center min-h-screen p-4">
           <div className="text-center mb-12 text-[#021024]">
-            <h2 className="text-5xl font-bold mb-4">Smart Attendance System</h2>
-            <p className="text-xl text-[#052659]">Select your role to get started</p>
+            {/* UPDATED: Added responsive text sizes */}
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">Smart Attendance System</h2>
+            <p className="text-lg md:text-xl text-[#052659]">Select your role to get started</p>
           </div>
           <div className="grid md:grid-cols-2 gap-8 w-full max-w-3xl">
             <RoleCard
@@ -65,17 +68,20 @@ export const LandingPage = ({ setView }) => {
         </footer>
       </div>
       
+      {/* UPDATED: Filled in the modal content */}
       <Modal isOpen={showAboutModal} onClose={() => setShowAboutModal(false)} title="About AttendanceHub">
         <p className="text-slate-600">
-            AttendanceHub is a modern solution for educational institutions to streamline and automate the attendance process. It uses QR codes combined with geo-fencing technology to ensure students are physically present in the classroom, eliminating proxy attendance...
+            AttendanceHub is a modern solution for educational institutions to streamline and automate the attendance process. It uses scannable QR codes to verify student presence and stores all data securely in a central database. It provides real-time insights, automated reports on defaulters, and helps create a more efficient and accountable learning environment.
         </p>
       </Modal>
 
       <Modal isOpen={showFeaturesModal} onClose={() => setShowFeaturesModal(false)} title="Key Features">
         <ul className="list-disc list-inside space-y-2 text-slate-600">
-            <li><span className="font-semibold">Geo-fenced QR Codes:</span> Students can only mark attendance after scanning a QR code while being within a specified geographical area (the classroom).</li>
+            <li><span className="font-semibold">Secure QR Code Scanning:</span> Students scan a unique, timed QR code to mark their attendance.</li>
             <li><span className="font-semibold">Role-Based Dashboards:</span> Separate, intuitive dashboards for teachers and students.</li>
-            <li><span className="font-semibold">Real-time Tracking & Reporting...</span></li>
+            <li><span className="font-semibold">Real-time Tracking:</span> Teachers can see live updates as students mark their attendance.</li>
+            <li><span className="font-semibold">Automated Defaulter Reports:</span> Automatically generate and download a CSV of students with attendance below 75%.</li>
+            <li><span className="font-semibold">Simulated Email Alerts:</span> The system is designed to notify mentors or parents about low attendance.</li>
         </ul>
       </Modal>
     </>

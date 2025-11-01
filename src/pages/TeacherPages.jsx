@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { InputField } from '../components/InputField.jsx';
+// CORRECTED: Added .jsx extension
+import { InputField } from '../components/InputField.jsx'; 
+// CORRECTED: Added .jsx extension
 import { BookOpenIcon, PlusIcon, QrCodeIcon, CalendarIcon, DownloadIcon, BarChartIcon } from '../components/Icons.jsx';
 
-export const TeacherDashboard = ({ setView, lectures, activeLecture, setActiveLecture, token }) => {
+export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setActiveLecture, token, allStudents }) => {
     const [liveAttendance, setLiveAttendance] = useState([]);
     const [countdown, setCountdown] = useState(30);
 
@@ -18,7 +20,9 @@ export const TeacherDashboard = ({ setView, lectures, activeLecture, setActiveLe
 
         const fetchLiveAttendance = async () => {
             try {
-                const res = await fetch(`http://localhost:3001/api/teacher/lectures/${activeLecture.id}/attendance`, {
+                // Use API_URL from App.jsx or define it here
+                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+                const res = await fetch(`${API_URL}/teacher/lectures/${activeLecture.id}/attendance`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
@@ -52,6 +56,10 @@ export const TeacherDashboard = ({ setView, lectures, activeLecture, setActiveLe
             clearInterval(countdownInterval);
         };
     }, [activeLecture, token, setActiveLecture]);
+
+    const getStudentName = (studentId) => {
+        return allStudents.find(s => s.id === studentId)?.name || 'Unknown Student';
+    };
     
     return (
         <main className="p-4 md:p-8">
@@ -136,7 +144,8 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures }) => {
         const fetchDefaulters = async () => {
             setIsLoading(true);
             try {
-                const res = await fetch(`http://localhost:3001/api/teacher/reports/defaulters/${teacherId}`, {
+                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+                const res = await fetch(`${API_URL}/teacher/reports/defaulters/${teacherId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
