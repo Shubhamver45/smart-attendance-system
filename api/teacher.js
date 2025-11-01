@@ -56,7 +56,7 @@ app.get('/api/teacher/lectures/:teacherId', async (req, res) => {
 // --- Get Defaulter Report (< 75%) (UPDATED for Supabase RPC) ---
 app.get('/api/teacher/reports/defaulters/:teacherId', async (req, res) => {
     try {
-        // THIS IS THE FIX: We call the database function we created in Step 1
+        // This calls the 'get_defaulters' function you created in the Supabase SQL Editor
         const { data, error } = await supabase.rpc('get_defaulters', {
             teacher_id_param: req.params.teacherId
         });
@@ -91,6 +91,7 @@ app.get('/api/teacher/lectures/:lectureId/attendance', async (req, res) => {
 
         if (error) throw error;
         
+        // Flatten the nested student name from the 'users' table
         const records = data.map(record => ({
             id: record.id,
             timestamp: record.timestamp,
