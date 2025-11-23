@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Navbar } from './components/Navbar.jsx';
 import { LandingPage } from './pages/LandingPage.jsx';
 import { TeacherLoginPage, TeacherRegisterPage, StudentLoginPage, StudentRegisterPage } from './pages/AuthPages.jsx';
@@ -222,7 +223,7 @@ export default function App() {
 
     // --- RENDER LOGIC (CORRECTED) ---
     const renderContent = () => {
-        if (isLoading) return <div className="flex justify-center items-center h-screen"><h1 className="text-2xl font-bold">Loading...</h1></div>;
+        if (isLoading) return <div className="flex justify-center items-center h-screen text-blue-600"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
 
         if (user) {
             switch (view) {
@@ -249,11 +250,20 @@ export default function App() {
     };
 
     return (
-        <>
+        <div className="min-h-screen bg-gray-50 text-gray-900 font-sans selection:bg-blue-100 selection:text-blue-900">
             <Navbar user={user} setView={setView} onLogout={handleLogout} />
-            <div key={view} className="animate-fadeIn">
-                {renderContent()}
-            </div>
-        </>
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={view}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="w-full"
+                >
+                    {renderContent()}
+                </motion.div>
+            </AnimatePresence>
+        </div>
     );
 }

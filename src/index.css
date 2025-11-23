@@ -1,39 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --animate-blob: blob 7s infinite;
+  --animate-fade-in: fadeIn 0.5s ease-out;
+  --animate-slide-up: slideUp 0.5s ease-out;
+
+  @keyframes blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
+  }
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes slideUp {
+    0% { transform: translateY(20px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+}
+
 body {
     font-family: 'Inter', sans-serif;
     margin: 0;
     padding: 0;
-}
-
-/* Fade in animation */
-@keyframes fadeIn {
-    from { 
-        opacity: 0; 
-        transform: scale(0.98) translateY(10px); 
-    }
-    to { 
-        opacity: 1; 
-        transform: scale(1) translateY(0); 
-    }
-}
-
-.animate-fadeIn {
-    animation: fadeIn 0.4s ease-in-out;
-}
-
-/* Fade in up animation */
-@keyframes fadeInUp {
-    from { 
-        opacity: 0; 
-        transform: scale(0.95) translateY(20px); 
-    }
-    to { 
-        opacity: 1; 
-        transform: scale(1) translateY(0); 
-    }
-}
-
-.animate-fadeInUp {
-    animation: fadeInUp 0.3s ease-out;
+    background-color: var(--color-slate-50);
+    color: var(--color-slate-900);
 }
 
 /* QR Scanner border fix */
