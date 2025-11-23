@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 @theme {
+  --color-background: var(--color-white);
+  --color-foreground: var(--color-slate-900);
+  
   --animate-blob: blob 7s infinite;
   --animate-fade-in: fadeIn 0.5s ease-out;
   --animate-slide-up: slideUp 0.5s ease-out;
