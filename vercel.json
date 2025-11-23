@@ -1,0 +1,19 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://attendence-backend-tfw2.onrender.com/api/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/:path*",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    }
+  ]
+}

@@ -5,8 +5,10 @@ import { TeacherLoginPage, TeacherRegisterPage, StudentLoginPage, StudentRegiste
 import { TeacherDashboard, AttendanceReportsPage, CreateLecturePage } from './pages/TeacherPages.jsx';
 import { StudentDashboard, ScanQRCodePage, ViewSchedulePage } from './pages/StudentPages.jsx';
 
-// This API_URL logic is 100% correct for Vercel + Local testing
-const API_URL = import.meta.env.PROD ? '/api' : 'http://localhost:3001/api';
+// API URL Configuration
+// Development: http://localhost:3001/api
+// Production: Uses VITE_API_URL from .env.production or falls back to /api
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
 
 export default function App() {
     // --- STATE MANAGEMENT ---
