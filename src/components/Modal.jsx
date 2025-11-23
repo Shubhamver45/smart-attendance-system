@@ -1,20 +1,38 @@
 import React from 'react';
-// Updated import path to be explicit
-import { XIcon } from './Icons.jsx';
+import { X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const Modal = ({ isOpen, onClose, title, children }) => {
-    if (!isOpen) return null;
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative animate-fadeInUp">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-[#021024]">{title}</h2>
-                    <button onClick={onClose} className="text-slate-500 hover:text-slate-800 p-1 rounded-full transition-colors">
-                        <XIcon className="w-6 h-6" />
-                    </button>
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={onClose}
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                    />
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative z-10 border border-slate-100"
+                    >
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
+                            <button 
+                                onClick={onClose} 
+                                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-full transition-all"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div>{children}</div>
+                    </motion.div>
                 </div>
-                <div>{children}</div>
-            </div>
-        </div>
+            )}
+        </AnimatePresence>
     );
 };
