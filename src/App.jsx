@@ -47,10 +47,10 @@ export default function App() {
             }
         };
         initializeApp();
-    // THIS IS THE FIX: The dependency array MUST be empty '[]'
-    // This ensures the app initializes only ONCE on page load.
-    }, []); 
-    
+        // THIS IS THE FIX: The dependency array MUST be empty '[]'
+        // This ensures the app initializes only ONCE on page load.
+    }, []);
+
     useEffect(() => {
         if (user?.role === 'student' && notificationPermission === 'default') {
             Notification.requestPermission().then(setNotificationPermission);
@@ -67,7 +67,7 @@ export default function App() {
                 const lectureRes = await fetch(`${API_URL}/teacher/lectures/${userData.id}`, { headers: { 'Authorization': `Bearer ${userToken}` } });
                 if (!lectureRes.ok) throw new Error('Failed to fetch lectures');
                 lectureData = await lectureRes.json();
-                
+
                 // We must also fetch all students and attendance for reports
                 const studentsRes = await fetch(`${API_URL}/teacher/all-students`, { headers: { 'Authorization': `Bearer ${userToken}` } });
                 const allAttendanceRes = await fetch(`${API_URL}/teacher/all-attendance`, { headers: { 'Authorization': `Bearer ${userToken}` } });
@@ -81,7 +81,7 @@ export default function App() {
                     fetch(`${API_URL}/student/lectures`, { headers: { 'Authorization': `Bearer ${userToken}` } }),
                     fetch(`${API_URL}/student/attendance/${userData.id}`, { headers: { 'Authorization': `Bearer ${userToken}` } })
                 ]);
-                
+
                 if (!lectureRes.ok) throw new Error('Failed to fetch lectures');
                 lectureData = await lectureRes.json();
 
@@ -89,7 +89,7 @@ export default function App() {
                     attendanceData = await attendanceRes.json();
                 }
             }
-            
+
             // Set state AFTER all data is fetched
             setLectures(lectureData);
             setAttendanceRecords(attendanceData);
@@ -110,7 +110,7 @@ export default function App() {
             console.error("Error fetching data:", error);
         }
     };
-    
+
     // --- NOTIFICATION & API HANDLERS ---
     const showNotification = (lecture) => {
         if (notificationPermission === 'granted' && lecture) {
@@ -125,17 +125,17 @@ export default function App() {
             const res = await fetch(`${API_URL}/auth/${role}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Login failed');
-            
+
             // UPDATED: Use sessionStorage
             sessionStorage.setItem('token', data.token);
             sessionStorage.setItem('user', JSON.stringify(data.user));
             setToken(data.token);
             setUser(data.user);
-            
+
             if (data.user.role === 'student' && !registeredStudents.find(s => s.id === data.user.id)) {
                 setRegisteredStudents(prev => [...prev, data.user]);
             }
-            
+
             // UPDATED: Use sessionStorage
             const pendingLectureId = sessionStorage.getItem('pendingLectureId');
             await fetchDataForUser(data.user, data.token, pendingLectureId);
@@ -150,8 +150,8 @@ export default function App() {
             const res = await fetch(`${API_URL}/auth/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Registration failed');
-            
-            if(formData.role === 'student') {
+
+            if (formData.role === 'student') {
                 setRegisteredStudents(prev => [...prev, formData]);
             }
 
@@ -182,17 +182,17 @@ export default function App() {
             return null;
         }
     };
-    
+
     const markAttendance = async (lectureId) => {
         if (!lectureId) {
-             alert("Invalid Lecture ID.");
-             return false;
+            alert("Invalid Lecture ID.");
+            return false;
         }
         try {
-            const res = await fetch(`${API_URL}/student/mark-attendance`, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
-                body: JSON.stringify({ lectureId: lectureId, studentId: user.id }) 
+            const res = await fetch(`${API_URL}/student/mark-attendance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ lectureId: lectureId, studentId: user.id })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to mark attendance');
@@ -211,7 +211,7 @@ export default function App() {
             showNotification(lecture);
         }
     };
-    
+
     const handleAttendFromNotification = (lecture) => {
         if (lecture) {
             setActiveLecture(lecture);
@@ -230,15 +230,15 @@ export default function App() {
                 // THIS IS THE FIX: Pass 'attendanceRecords' and 'allStudents' to the reports page
                 case 'reports': return <AttendanceReportsPage setView={setView} lectures={lectures} attendanceRecords={attendanceRecords} allStudents={registeredStudents} teacherId={user.id} token={token} />;
                 case 'createLecture': return <CreateLecturePage setView={setView} addLecture={addLecture} setActiveLecture={handleSetActiveLecture} />;
-                
+
                 case 'studentHome': return <StudentDashboard user={user} setView={setView} lectures={lectures} attendanceRecords={attendanceRecords} lectureNotification={lectureNotification} onAttendNow={handleAttendFromNotification} />;
-                case 'scanQRCode': return <ScanQRCodePage setView={setView} markAttendance={markAttendance} />;
+                case 'scanQRCode': return <ScanQRCodePage setView={setView} markAttendance={markAttendance} lectures={lectures} />;
                 case 'viewSchedule': return <ViewSchedulePage setView={setView} lectures={lectures} />;
-                
+
                 default: setView(user.role === 'teacher' ? 'teacherHome' : 'studentHome'); return null;
             }
         }
-        
+
         switch (view) {
             case 'teacherLogin': return <TeacherLoginPage setView={setView} onLogin={handleLogin} />;
             case 'teacherRegister': return <TeacherRegisterPage setView={setView} onRegister={handleRegister} />;

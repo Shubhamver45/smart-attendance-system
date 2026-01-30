@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { InputField } from '../components/InputField.jsx';
-import { BookOpenIcon, PlusIcon, QrCodeIcon, CalendarIcon, DownloadIcon, BarChartIcon } from '../components/Icons.jsx';
+import { LocationPicker } from '../components/LocationPicker.jsx';
+import { BookOpenIcon, PlusIcon, QrCodeIcon, CalendarIcon, DownloadIcon, BarChartIcon, MapPinIcon } from '../components/Icons.jsx';
 
 // Define the API_URL at the top of the file to be used by all components
 const API_URL = import.meta.env.PROD ? '/api' : 'http://localhost:3001/api';
@@ -24,7 +25,7 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
 
     useEffect(() => {
         if (!activeLecture) {
-            setLiveAttendance([]); 
+            setLiveAttendance([]);
             return;
         }
         setCountdown(30);
@@ -43,13 +44,13 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
         };
 
         fetchLiveAttendance();
-        const pollInterval = setInterval(fetchLiveAttendance, 5000); 
+        const pollInterval = setInterval(fetchLiveAttendance, 5000);
         const countdownInterval = setInterval(() => {
             setCountdown(prev => {
                 if (prev <= 1) {
                     clearInterval(countdownInterval);
                     clearInterval(pollInterval);
-                    setActiveLecture(null); 
+                    setActiveLecture(null);
                     return 0;
                 }
                 return prev - 1;
@@ -66,19 +67,19 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to fetch report');
-            
+
             const headers = "Student ID,Roll Number,Enrollment Number,Name,Time Attended\n";
             let rows = "";
 
             if (data.length > 0) {
-                rows = data.map(row => 
+                rows = data.map(row =>
                     `${row.student_id},${row.roll_number || 'N/A'},${row.enrollment_number || 'N/A'},"${row.student_name}",${new Date(row.timestamp).toLocaleString()}`
                 ).join('\n');
             } else {
                 // This fixes your "No data" issue. We'll still download a file.
                 rows = "No students attended this lecture.";
             }
-            
+
             downloadCSV(headers + rows, `lecture_${lecture.name.replace(/\s+/g, '_')}_report.csv`);
 
         } catch (error) {
@@ -86,7 +87,7 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
             alert("Error downloading report.");
         }
     };
-    
+
     return (
         <main className="p-4 md:p-8">
             {activeLecture ? (
@@ -95,9 +96,9 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
                         <h2 className="text-2xl font-bold mb-2 text-green-600">Lecture is Active!</h2>
                         <p className="text-slate-500 mb-2">QR code will expire in:</p>
                         <p className="text-4xl font-bold text-red-600 mb-4">{countdown}s</p>
-                        <img 
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(activeLecture.qrUrl)}`} 
-                            alt="Active QR Code" 
+                        <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(activeLecture.qrUrl)}`}
+                            alt="Active QR Code"
                             className="mx-auto rounded-lg shadow-md"
                         />
                         <div className="mt-4 text-left bg-slate-50 p-4 rounded-lg">
@@ -108,7 +109,7 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
                             Deactivate Manually
                         </button>
                     </div>
-                     <div className="bg-white/80 p-6 rounded-2xl shadow-lg">
+                    <div className="bg-white/80 p-6 rounded-2xl shadow-lg">
                         <h3 className="text-xl font-bold mb-4">Live Attendance ({liveAttendance.length})</h3>
                         <div className="space-y-3 h-96 overflow-y-auto">
                             {liveAttendance.length > 0 ? liveAttendance.map(record => (
@@ -121,14 +122,14 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
                     </div>
                 </div>
             ) : (
-                 <div className="text-center bg-white/80 rounded-2xl p-8 md:p-12 mb-8">
+                <div className="text-center bg-white/80 rounded-2xl p-8 md:p-12 mb-8">
                     <h2 className="text-2xl font-bold">No Active Lecture</h2>
                     <p className="text-slate-500 mt-2">Select a lecture from the list below.</p>
                 </div>
             )}
-            
+
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                 <div>
+                <div>
                     <h2 className="text-2xl md:text-3xl font-bold text-[#021024]">My Lectures</h2>
                     <p className="text-slate-600">Activate a lecture or download a past report.</p>
                 </div>
@@ -136,15 +137,28 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
                     <PlusIcon className="w-5 h-5" /> Create New Lecture
                 </button>
             </div>
-            
+
             {lectures.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {lectures.map(lecture => (
                         <div key={lecture.id} className={`bg-white/80 p-6 rounded-2xl shadow-lg flex flex-col justify-between border-2 ${activeLecture?.id === lecture.id ? 'border-green-500' : 'border-transparent'}`}>
                             <div>
-                                <h3 className="font-bold text-xl">{lecture.name}</h3>
+                                <div className="flex items-start justify-between mb-2">
+                                    <h3 className="font-bold text-xl">{lecture.name}</h3>
+                                    {lecture.latitude && lecture.longitude && (
+                                        <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1">
+                                            <MapPinIcon className="w-3 h-3" />
+                                            {lecture.radius}m
+                                        </span>
+                                    )}
+                                </div>
                                 <p className="text-slate-500">{lecture.subject}</p>
                                 <p className="text-sm text-slate-400 mt-2">{lecture.time}</p>
+                                {lecture.latitude && lecture.longitude && (
+                                    <p className="text-xs text-green-600 mt-2 font-medium">
+                                        📍 Geofencing enabled
+                                    </p>
+                                )}
                             </div>
                             <div className="flex gap-2 mt-4">
                                 <button onClick={() => setActiveLecture(lecture)} disabled={!!activeLecture} className="w-1/2 bg-green-500 text-white font-semibold py-2 rounded-lg hover:bg-green-600 disabled:bg-slate-400">
@@ -158,7 +172,7 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
                     ))}
                 </div>
             ) : (
-                 <div className="text-center bg-white/80 rounded-2xl p-16 flex flex-col items-center gap-6">
+                <div className="text-center bg-white/80 rounded-2xl p-16 flex flex-col items-center gap-6">
                     <div className="bg-[#C1E8FF] p-4 rounded-full"><QrCodeIcon className="w-16 h-16 text-[#052659]" /></div>
                     <h3 className="text-2xl font-bold">No lectures yet</h3>
                     <p className="text-slate-500 max-w-sm">Create your first lecture to get started.</p>
@@ -182,32 +196,32 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
                 setDefaulters([]);
                 return;
             }
-            
+
             const totalLectures = lectures.length;
-            
+
             const defaulterList = allStudents.map(student => {
                 // Find all attendance records for this student
                 const studentRecords = attendanceRecords.filter(rec => rec.student_id === student.id);
-                
+
                 // Count how many of this teacher's lectures the student attended
-                const attendedCount = lectures.filter(lecture => 
+                const attendedCount = lectures.filter(lecture =>
                     studentRecords.some(rec => rec.lecture_id === lecture.id && rec.status === 'present')
                 ).length;
-                
+
                 const percentage = (attendedCount / totalLectures) * 100;
-                
-                return { 
-                    ...student, 
+
+                return {
+                    ...student,
                     attended_count: attendedCount,
                     total_lectures: totalLectures,
-                    percentage: percentage 
+                    percentage: percentage
                 };
             }).filter(student => student.percentage < 75);
 
             setDefaulters(defaulterList);
             setIsLoading(false);
         };
-        
+
         // We no longer fetch, we just calculate.
         calculateDefaulters();
     }, [lectures, allStudents, attendanceRecords]); // Depend on the data from App.jsx
@@ -219,7 +233,7 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
         if (defaulters.length === 0) {
             rows = "No defaulters found for this period.";
         } else {
-            rows = defaulters.map(d => 
+            rows = defaulters.map(d =>
                 `${d.id},"${d.name}",${d.roll_number || 'N/A'},${d.enrollment_number || 'N/A'},${d.percentage.toFixed(0)}%`
             ).join('\n');
         }
@@ -249,12 +263,14 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
 
 // --- THIS COMPONENT IS NOW FULLY CORRECTED ---
 export const CreateLecturePage = ({ setView, addLecture, setActiveLecture }) => {
-    // UPDATED: State now matches the new form
-    const [lectureDetails, setLectureDetails] = useState({ 
-        subject: '', 
+    // UPDATED: State now matches the new form + geofencing
+    const [lectureDetails, setLectureDetails] = useState({
+        subject: '',
         date: new Date().toISOString().split('T')[0], // Defaults to today's date
-        time: '' 
+        time: ''
     });
+    const [location, setLocation] = useState({ latitude: null, longitude: null });
+    const [radius, setRadius] = useState(100); // Default 100 meters
     const [qrImageUrl, setQrImageUrl] = useState('');
     const [createdLecture, setCreatedLecture] = useState(null);
 
@@ -262,9 +278,22 @@ export const CreateLecturePage = ({ setView, addLecture, setActiveLecture }) => 
 
     const handleGenerateQr = async (e) => {
         e.preventDefault();
-        // UPDATED: Check for new fields
+        // UPDATED: Check for new fields including location
         if (lectureDetails.subject && lectureDetails.date && lectureDetails.time) {
-            const newLectureData = await addLecture(lectureDetails); // This function is passed from App.jsx
+            if (!location.latitude || !location.longitude) {
+                alert('Please set the lecture location for geofencing');
+                return;
+            }
+
+            // Include location and radius in lecture data
+            const lectureDataWithLocation = {
+                ...lectureDetails,
+                latitude: location.latitude,
+                longitude: location.longitude,
+                radius: radius
+            };
+
+            const newLectureData = await addLecture(lectureDataWithLocation); // This function is passed from App.jsx
             if (newLectureData && newLectureData.qrUrl) {
                 setCreatedLecture(newLectureData);
                 setQrImageUrl(`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(newLectureData.qrUrl)}`);
@@ -297,9 +326,18 @@ export const CreateLecturePage = ({ setView, addLecture, setActiveLecture }) => 
                     <h2 className="text-3xl font-bold text-center mb-6">Create New Lecture</h2>
                     {/* UPDATED: The form now matches your request */}
                     <form className="space-y-4" onSubmit={handleGenerateQr}>
-                        <InputField id="subject" label="Subject" type="text" placeholder="e.g., Data Structures" value={lectureDetails.subject} onChange={handleInputChange} icon={<BookOpenIcon className="w-5 h-5"/>} />
-                        <InputField id="date" label="Date" type="date" value={lectureDetails.date} onChange={handleInputChange} icon={<CalendarIcon className="w-5 h-5"/>} />
-                        <InputField id="time" label="Time" type="time" placeholder="e.g., 10:30" value={lectureDetails.time} onChange={handleInputChange} icon={<CalendarIcon className="w-5 h-5"/>} />
+                        <InputField id="subject" label="Subject" type="text" placeholder="e.g., Data Structures" value={lectureDetails.subject} onChange={handleInputChange} icon={<BookOpenIcon className="w-5 h-5" />} />
+                        <InputField id="date" label="Date" type="date" value={lectureDetails.date} onChange={handleInputChange} icon={<CalendarIcon className="w-5 h-5" />} />
+                        <InputField id="time" label="Time" type="time" placeholder="e.g., 10:30" value={lectureDetails.time} onChange={handleInputChange} icon={<CalendarIcon className="w-5 h-5" />} />
+
+                        {/* Geofencing Location Picker */}
+                        <LocationPicker
+                            location={location}
+                            radius={radius}
+                            onLocationChange={setLocation}
+                            onRadiusChange={setRadius}
+                        />
+
                         <button type="submit" className="w-full bg-[#052659] text-white font-bold py-3 rounded-lg hover:bg-[#021024] mt-4">Generate QR Code</button>
                     </form>
                 </div>

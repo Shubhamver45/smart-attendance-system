@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode'; // Import the new scanner package
 import { CalendarIcon, MapPinIcon, QrCodeIcon, CalendarDaysIcon } from '../components/Icons.jsx';
+import { getCurrentLocation, isWithinGeofence, formatDistance, calculateDistance } from '../utils/geolocation.js';
 
 // Internal sub-component for StudentDashboard stats
 const StatCard = ({ title, value, subtitle, color }) => {
@@ -17,7 +18,7 @@ const StatCard = ({ title, value, subtitle, color }) => {
 export const StudentDashboard = ({ setView, lectures, attendanceRecords, lectureNotification, onAttendNow }) => {
     const myRecords = attendanceRecords;
     const presentCount = myRecords.filter(rec => rec.status === 'present').length;
-    
+
     // THIS IS THE FIX for the "N/A" bug.
     // We create a "Map" for instant lecture name lookups.
     const lectureMap = new Map(lectures.map(l => [l.id, l.name]));
@@ -26,7 +27,7 @@ export const StudentDashboard = ({ setView, lectures, attendanceRecords, lecture
     const absentCount = lectures.length - presentCount;
     // Handle potential negative number if records load faster than lectures
     const finalAbsentCount = Math.max(0, absentCount);
-    
+
     const attendanceRate = lectures.length > 0 ? Math.round((presentCount / lectures.length) * 100) : 0;
 
     return (
@@ -44,17 +45,17 @@ export const StudentDashboard = ({ setView, lectures, attendanceRecords, lecture
             )}
             {/* UPDATED: Grid is now 3 columns, "Late" card is removed */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white/80 p-6 rounded-2xl shadow-lg"><h3 className="font-semibold text-slate-500 mb-2">Attendance Rate</h3><p className="text-3xl font-bold text-[#052659]">{attendanceRate}%</p><div className="w-full bg-slate-200 rounded-full h-2.5 mt-2"><div className="bg-[#5483B3] h-2.5 rounded-full" style={{width: `${attendanceRate}%`}}></div></div><p className="text-sm text-slate-400 mt-1">{presentCount} of {lectures.length} classes</p></div>
+                <div className="bg-white/80 p-6 rounded-2xl shadow-lg"><h3 className="font-semibold text-slate-500 mb-2">Attendance Rate</h3><p className="text-3xl font-bold text-[#052659]">{attendanceRate}%</p><div className="w-full bg-slate-200 rounded-full h-2.5 mt-2"><div className="bg-[#5483B3] h-2.5 rounded-full" style={{ width: `${attendanceRate}%` }}></div></div><p className="text-sm text-slate-400 mt-1">{presentCount} of {lectures.length} classes</p></div>
                 <StatCard title="Present" value={presentCount} subtitle="On time" color="green" />
                 <StatCard title="Absent" value={finalAbsentCount} subtitle="Missed classes" color="red" />
             </div>
-            
+
             {/* REMOVED: The entire "Quick Actions" box is gone */}
 
             <div className="bg-white/80 p-6 rounded-2xl shadow-lg">
                 <h3 className="text-xl font-bold mb-4">Attendance History</h3>
                 {myRecords.length > 0 ? (
-                    <ul className="space-y-3">{myRecords.map(record => { 
+                    <ul className="space-y-3">{myRecords.map(record => {
                         // THIS IS THE FIX: We use the lectureMap to find the name
                         const lectureName = lectureMap.get(record.lecture_id) || 'Lecture Data Loading...';
                         return (
@@ -75,10 +76,11 @@ export const StudentDashboard = ({ setView, lectures, attendanceRecords, lecture
     );
 };
 
-// CORRECTED: This is the in-app QR code scanner page
-export const ScanQRCodePage = ({ setView, markAttendance }) => {
+// CORRECTED: This is the in-app QR code scanner page with geofencing
+export const ScanQRCodePage = ({ setView, markAttendance, lectures }) => {
     const [scanResult, setScanResult] = useState(null);
     const [isScanning, setIsScanning] = useState(true);
+    const [locationStatus, setLocationStatus] = useState('');
 
     useEffect(() => {
         if (!isScanning) return;
@@ -91,21 +93,75 @@ export const ScanQRCodePage = ({ setView, markAttendance }) => {
         const onScanSuccess = async (decodedText, decodedResult) => {
             if (!isScanning) return; // Prevent multiple scans
             setIsScanning(false); // Stop scanning
-            
+
             try {
                 // The decoded text is a URL, e.g., "https://.../attend?lectureId=123"
                 const url = new URL(decodedText);
                 const lectureId = url.searchParams.get('lectureId');
-                
+
                 if (lectureId) {
-                    setScanResult(`Scanned lecture ${lectureId}. Submitting...`);
-                    const success = await markAttendance(lectureId); // Pass the ID
-                    if (success) {
-                        setScanResult('Attendance Marked Successfully!');
-                        setTimeout(() => setView('studentHome'), 2000);
-                    } else {
-                        // Failure alert is handled by App.jsx, just go back.
-                        setTimeout(() => setView('studentHome'), 3000);
+                    setScanResult(`Verifying location...`);
+                    setLocationStatus('Getting your location...');
+
+                    // Find the lecture details
+                    const lecture = lectures.find(l => l.id === parseInt(lectureId));
+
+                    if (!lecture) {
+                        throw new Error("Lecture not found");
+                    }
+
+                    // Check if lecture has geofencing enabled
+                    if (!lecture.latitude || !lecture.longitude) {
+                        // No geofencing for this lecture, proceed normally
+                        setScanResult(`Marking attendance...`);
+                        const success = await markAttendance(lectureId);
+                        if (success) {
+                            setScanResult('✓ Attendance Marked Successfully!');
+                            setTimeout(() => setView('studentHome'), 2000);
+                        } else {
+                            setTimeout(() => setView('studentHome'), 3000);
+                        }
+                        return;
+                    }
+
+                    // Get student's current location
+                    try {
+                        const studentLocation = await getCurrentLocation();
+                        setLocationStatus('Checking if you are within range...');
+
+                        // Calculate distance
+                        const distance = calculateDistance(
+                            studentLocation.latitude,
+                            studentLocation.longitude,
+                            lecture.latitude,
+                            lecture.longitude
+                        );
+
+                        // Check if within geofence
+                        const withinGeofence = isWithinGeofence(
+                            studentLocation.latitude,
+                            studentLocation.longitude,
+                            lecture.latitude,
+                            lecture.longitude,
+                            lecture.radius || 100
+                        );
+
+                        if (withinGeofence) {
+                            setScanResult(`Location verified! Marking attendance...`);
+                            const success = await markAttendance(lectureId);
+                            if (success) {
+                                setScanResult(`✓ Attendance Marked Successfully!\n\nYou are ${formatDistance(distance)} from the lecture location.`);
+                                setTimeout(() => setView('studentHome'), 2500);
+                            } else {
+                                setTimeout(() => setView('studentHome'), 3000);
+                            }
+                        } else {
+                            setScanResult(`❌ Location Verification Failed\n\nYou are ${formatDistance(distance)} away from the lecture location.\n\nRequired: Within ${lecture.radius || 100} meters\n\nPlease move closer to mark attendance.`);
+                            setTimeout(() => setView('studentHome'), 5000);
+                        }
+                    } catch (locationError) {
+                        setScanResult(`❌ Location Access Required\n\n${locationError.message}\n\nPlease enable location services to mark attendance.`);
+                        setTimeout(() => setView('studentHome'), 5000);
                     }
                 } else {
                     throw new Error("QR code does not contain a valid lecture ID.");
@@ -132,21 +188,30 @@ export const ScanQRCodePage = ({ setView, markAttendance }) => {
                 });
             }
         };
-    }, [isScanning, setView, markAttendance]); // Add dependencies
+    }, [isScanning, setView, markAttendance, lectures]); // Add dependencies
 
     return (
         <main className="p-4 md:p-8 flex flex-col items-center">
             <div className="w-full max-w-md bg-white/80 p-8 rounded-2xl shadow-lg text-center">
                 <h2 className="text-2xl font-bold text-[#021024] mb-4">Scan Lecture QR Code</h2>
+
+                {locationStatus && !scanResult && (
+                    <div className="mb-4 bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                        <p className="text-sm text-blue-700 font-semibold">{locationStatus}</p>
+                    </div>
+                )}
+
                 {scanResult ? (
-                    <div className="my-8 h-[250px] flex items-center justify-center">
-                        <p className="text-green-600 font-bold text-lg">{scanResult}</p>
+                    <div className="my-8 min-h-[250px] flex items-center justify-center">
+                        <p className="text-lg font-bold whitespace-pre-line" style={{
+                            color: scanResult.includes('✓') ? '#16a34a' : scanResult.includes('❌') ? '#dc2626' : '#059669'
+                        }}>{scanResult}</p>
                     </div>
                 ) : (
                     // This div is the container where the camera view will be rendered
                     <div id="reader" className="w-full"></div>
                 )}
-                 <button onClick={() => setView('studentHome')} className="mt-6 text-slate-600 hover:underline">
+                <button onClick={() => setView('studentHome')} className="mt-6 text-slate-600 hover:underline">
                     Back to Dashboard
                 </button>
             </div>
@@ -160,7 +225,7 @@ export const ViewSchedulePage = ({ lectures, setView }) => (
     <main className="p-4 md:p-8 flex flex-col items-center">
         <div className="w-full max-w-4xl bg-white/80 p-8 rounded-2xl shadow-lg">
             <div className="flex items-center justify-center gap-4 mb-6">
-                <CalendarDaysIcon className="w-10 h-10 text-[#052659]"/>
+                <CalendarDaysIcon className="w-10 h-10 text-[#052659]" />
                 <h2 className="text-3xl font-bold text-center">My Weekly Schedule</h2>
             </div>
             {/* Added back button for mobile-friendliness */}
