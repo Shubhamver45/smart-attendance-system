@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar.jsx';
 import { LandingPage } from './pages/LandingPage.jsx';
-import { TeacherLoginPage, TeacherRegisterPage, StudentLoginPage, StudentRegisterPage } from './pages/AuthPages.jsx';
+import { TeacherLoginPage, TeacherRegisterPage, StudentLoginPage, StudentRegisterPage, AdminLoginPage } from './pages/AuthPages.jsx';
 import { TeacherDashboard, AttendanceReportsPage, CreateLecturePage } from './pages/TeacherPages.jsx';
 import { StudentDashboard, ScanQRCodePage, ViewSchedulePage } from './pages/StudentPages.jsx';
+import { AdminDashboard } from './pages/AdminPages.jsx';
 
 // API URL Configuration
 // Development: http://localhost:3001/api
@@ -63,7 +64,12 @@ export default function App() {
             let lectureData = [];
             let attendanceData = [];
 
-            if (userData.role === 'teacher') {
+            if (userData.role === 'admin') {
+                // Admin doesn't need lecture/attendance data on init — AdminDashboard fetches its own
+                setIsLoading(false);
+                setView('adminHome');
+                return;
+            } else if (userData.role === 'teacher') {
                 const lectureRes = await fetch(`${API_URL}/teacher/lectures/${userData.id}`, { headers: { 'Authorization': `Bearer ${userToken}` } });
                 if (!lectureRes.ok) throw new Error('Failed to fetch lectures');
                 lectureData = await lectureRes.json();
@@ -226,16 +232,23 @@ export default function App() {
 
         if (user) {
             switch (view) {
+                // --- Admin Views ---
+                case 'adminHome': return <AdminDashboard user={user} token={token} setView={setView} />;
+
+                // --- Teacher Views ---
                 case 'teacherHome': return <TeacherDashboard user={user} setView={setView} lectures={lectures} activeLecture={activeLecture} setActiveLecture={handleSetActiveLecture} token={token} allStudents={registeredStudents} />;
-                // THIS IS THE FIX: Pass 'attendanceRecords' and 'allStudents' to the reports page
                 case 'reports': return <AttendanceReportsPage setView={setView} lectures={lectures} attendanceRecords={attendanceRecords} allStudents={registeredStudents} teacherId={user.id} token={token} />;
                 case 'createLecture': return <CreateLecturePage setView={setView} addLecture={addLecture} setActiveLecture={handleSetActiveLecture} />;
 
+                // --- Student Views ---
                 case 'studentHome': return <StudentDashboard user={user} setView={setView} lectures={lectures} attendanceRecords={attendanceRecords} lectureNotification={lectureNotification} onAttendNow={handleAttendFromNotification} />;
                 case 'scanQRCode': return <ScanQRCodePage setView={setView} markAttendance={markAttendance} lectures={lectures} />;
                 case 'viewSchedule': return <ViewSchedulePage setView={setView} lectures={lectures} />;
 
-                default: setView(user.role === 'teacher' ? 'teacherHome' : 'studentHome'); return null;
+                default:
+                    if (user.role === 'admin') { setView('adminHome'); }
+                    else { setView(user.role === 'teacher' ? 'teacherHome' : 'studentHome'); }
+                    return null;
             }
         }
 
@@ -244,6 +257,7 @@ export default function App() {
             case 'teacherRegister': return <TeacherRegisterPage setView={setView} onRegister={handleRegister} />;
             case 'studentLogin': return <StudentLoginPage setView={setView} onLogin={handleLogin} />;
             case 'studentRegister': return <StudentRegisterPage setView={setView} onRegister={handleRegister} />;
+            case 'adminLogin': return <AdminLoginPage setView={setView} onLogin={handleLogin} />;
             default: return <LandingPage setView={setView} />;
         }
     };

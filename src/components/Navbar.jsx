@@ -1,27 +1,33 @@
 import React from 'react';
 // CORRECTED: Added .jsx extension
-import { BookOpenIcon, LogOutIcon, BarChartIcon, CalendarDaysIcon, QrCodeIcon } from './Icons.jsx';
+import { BookOpenIcon, LogOutIcon, BarChartIcon, CalendarDaysIcon, QrCodeIcon, ShieldIcon, UsersIcon, ActivityIcon } from './Icons.jsx';
 
 export const Navbar = ({ user, setView, onLogout }) => {
     if (!user) return null;
 
-    // UPDATED: Added "Scan QR" to the student's links
-    const navLinks = user.role === 'teacher' 
+    // UPDATED: Added admin nav links
+    const navLinks = user.role === 'admin'
         ? [
-            { name: 'My Lectures', view: 'teacherHome', icon: <BookOpenIcon className="w-5 h-5"/> }, 
-            { name: 'Monthly Reports', view: 'reports', icon: <BarChartIcon className="w-5 h-5"/> }
-          ]
-        : [
-            { name: 'My Attendance', view: 'studentHome', icon: <BookOpenIcon className="w-5 h-5"/> }, 
-            { name: 'Schedule', view: 'viewSchedule', icon: <CalendarDaysIcon className="w-5 h-5"/> },
-            // THIS IS THE NEW BUTTON FOR STUDENTS
-            { name: 'Scan QR', view: 'scanQRCode', icon: <QrCodeIcon className="w-5 h-5"/>, isPrimary: true }
-          ];
+            { name: 'Dashboard', view: 'adminHome', icon: <ActivityIcon className="w-5 h-5" /> },
+            { name: 'Users', view: 'adminHome', icon: <UsersIcon className="w-5 h-5" /> },
+            { name: 'Reports', view: 'adminHome', icon: <BarChartIcon className="w-5 h-5" /> }
+        ]
+        : user.role === 'teacher'
+            ? [
+                { name: 'My Lectures', view: 'teacherHome', icon: <BookOpenIcon className="w-5 h-5" /> },
+                { name: 'Monthly Reports', view: 'reports', icon: <BarChartIcon className="w-5 h-5" /> }
+            ]
+            : [
+                { name: 'My Attendance', view: 'studentHome', icon: <BookOpenIcon className="w-5 h-5" /> },
+                { name: 'Schedule', view: 'viewSchedule', icon: <CalendarDaysIcon className="w-5 h-5" /> },
+                // THIS IS THE NEW BUTTON FOR STUDENTS
+                { name: 'Scan QR', view: 'scanQRCode', icon: <QrCodeIcon className="w-5 h-5" />, isPrimary: true }
+            ];
 
     return (
         <header className="bg-white/80 backdrop-blur-md p-4 flex justify-between items-center shadow-md sticky top-0 z-20">
             <div className="flex items-center gap-3">
-                <BookOpenIcon className="w-8 h-8 text-[#052659]"/>
+                <BookOpenIcon className="w-8 h-8 text-[#052659]" />
                 <div>
                     <h1 className="text-xl font-bold text-[#021024]">AttendanceHub</h1>
                     <p className="text-sm text-slate-500">Welcome, {user.name}</p>

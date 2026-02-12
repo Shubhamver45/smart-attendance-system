@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 // CORRECTED: Added .jsx extension
-import { Modal } from '../components/Modal.jsx'; 
+import { Modal } from '../components/Modal.jsx';
 // CORRECTED: Added .jsx extension
-import { UserIcon, GraduationCapIcon, BookOpenIcon } from '../components/Icons.jsx'; 
+import { UserIcon, GraduationCapIcon, BookOpenIcon, ShieldIcon } from '../components/Icons.jsx';
 
 // This is a sub-component used only by LandingPage
 const RoleCard = ({ icon, title, description, buttonText, onClick, isPrimary }) => (
@@ -29,7 +29,7 @@ export const LandingPage = ({ setView }) => {
       <div className="w-full text-gray-800 flex flex-col min-h-screen">
         <header className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center text-[#021024] z-10">
           <div className="flex items-center gap-3">
-            <BookOpenIcon className="w-8 h-8"/>
+            <BookOpenIcon className="w-8 h-8" />
             <h1 className="text-2xl font-bold">AttendanceHub</h1>
           </div>
           {/* Nav is hidden on mobile, visible on medium screens and up */}
@@ -38,7 +38,7 @@ export const LandingPage = ({ setView }) => {
             <button onClick={() => setShowAboutModal(true)} className="hover:underline font-semibold">About</button>
           </nav>
         </header>
-        
+
         {/* 'flex-grow' pushes the footer down, 'pt-24' adds space for the header */}
         <main className="flex flex-col items-center justify-center flex-grow p-4 pt-24">
           <div className="text-center mb-12 text-[#021024]">
@@ -47,9 +47,9 @@ export const LandingPage = ({ setView }) => {
             <p className="text-lg md:text-xl text-[#052659]">Select your role to get started</p>
           </div>
           {/* This grid stacks to 1 column on mobile and is 2 columns on desktop */}
-          <div className="grid md:grid-cols-2 gap-8 w-full max-w-3xl">
+          <div className="grid md:grid-cols-3 gap-8 w-full max-w-5xl">
             <RoleCard
-              icon={<UserIcon className="w-12 h-12 mx-auto text-[#052659]"/>}
+              icon={<UserIcon className="w-12 h-12 mx-auto text-[#052659]" />}
               title="Teacher"
               description="Manage lectures and track attendance"
               buttonText="Continue as Teacher"
@@ -57,11 +57,19 @@ export const LandingPage = ({ setView }) => {
               isPrimary={true}
             />
             <RoleCard
-              icon={<GraduationCapIcon className="w-12 h-12 mx-auto text-[#052659]"/>}
+              icon={<GraduationCapIcon className="w-12 h-12 mx-auto text-[#052659]" />}
               title="Student"
               description="Mark your attendance quickly"
               buttonText="Continue as Student"
               onClick={() => setView('studentLogin')}
+              isPrimary={false}
+            />
+            <RoleCard
+              icon={<ShieldIcon className="w-12 h-12 mx-auto text-[#052659]" />}
+              title="Admin"
+              description="System administration and oversight"
+              buttonText="Continue as Admin"
+              onClick={() => setView('adminLogin')}
               isPrimary={false}
             />
           </div>
@@ -72,21 +80,21 @@ export const LandingPage = ({ setView }) => {
           <p>© 2025 Smart Attendance System. All rights reserved.</p>
         </footer>
       </div>
-      
+
       {/* Modal content is complete */}
       <Modal isOpen={showAboutModal} onClose={() => setShowAboutModal(false)} title="About AttendanceHub">
         <p className="text-slate-600">
-            AttendanceHub is a modern solution for educational institutions to streamline and automate the attendance process. It uses scannable QR codes to verify student presence and stores all data securely in a central database. It provides real-time insights, automated reports on defaulters, and helps create a more efficient and accountable learning environment.
+          AttendanceHub is a modern solution for educational institutions to streamline and automate the attendance process. It uses scannable QR codes to verify student presence and stores all data securely in a central database. It provides real-time insights, automated reports on defaulters, and helps create a more efficient and accountable learning environment.
         </p>
       </Modal>
 
       <Modal isOpen={showFeaturesModal} onClose={() => setShowFeaturesModal(false)} title="Key Features">
         <ul className="list-disc list-inside space-y-2 text-slate-600">
-            <li><span className="font-semibold">Secure QR Code Scanning:</span> Students scan a unique, timed QR code to mark their attendance.</li>
-            <li><span className="font-semibold">Role-Based Dashboards:</span> Separate, intuitive dashboards for teachers and students.</li>
-            <li><span className="font-semibold">Real-time Tracking:</span> Teachers can see live updates as students mark their attendance.</li>
-            <li><span className="font-semibold">Automated Defaulter Reports:</span> Automatically generate and download a CSV of students with attendance below 75%.</li>
-            <li><span className="font-semibold">Simulated Email Alerts:</span> The system is designed to notify mentors or parents about low attendance.</li>
+          <li><span className="font-semibold">Secure QR Code Scanning:</span> Students scan a unique, timed QR code to mark their attendance.</li>
+          <li><span className="font-semibold">Role-Based Dashboards:</span> Separate, intuitive dashboards for teachers and students.</li>
+          <li><span className="font-semibold">Real-time Tracking:</span> Teachers can see live updates as students mark their attendance.</li>
+          <li><span className="font-semibold">Automated Defaulter Reports:</span> Automatically generate and download a CSV of students with attendance below 75%.</li>
+          <li><span className="font-semibold">Simulated Email Alerts:</span> The system is designed to notify mentors or parents about low attendance.</li>
         </ul>
       </Modal>
     </>
