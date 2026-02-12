@@ -1,26 +1,31 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler, RadialLinearScale } from 'chart.js';
 import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2';
-import { BarChartIcon, DownloadIcon, TrashIcon, UsersIcon, ActivityIcon, BookOpenIcon, UserIcon, GraduationCapIcon, ShieldIcon, XIcon } from '../components/Icons.jsx';
+import { BarChartIcon, DownloadIcon, TrashIcon, UsersIcon, ActivityIcon, BookOpenIcon, UserIcon, GraduationCapIcon, ShieldIcon, XIcon, CalendarIcon, LockIcon } from '../components/Icons.jsx';
 
 // Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler);
+ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler, RadialLinearScale);
 
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
 
 // ═══════════════════════════════════════════════════════════
-// SHARED STYLES
+// STYLES & ANIMATIONS
 // ═══════════════════════════════════════════════════════════
 
-const CARD = "bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-white/60 transition-all duration-300 hover:shadow-xl";
-const CARD_HEADER = "flex items-center justify-between mb-4";
-const CARD_TITLE = "text-base font-bold text-[#021024]";
-const CARD_SUBTITLE = "text-xs text-[#5483B3] font-medium";
-const BTN_PRIMARY = "flex items-center gap-2 px-4 py-2.5 bg-[#052659] text-white rounded-xl hover:bg-[#021024] transition-all text-sm font-semibold shadow-md hover:shadow-lg";
-const BTN_SECONDARY = "flex items-center gap-2 px-4 py-2 bg-white/80 border border-[#C1E8FF] rounded-xl text-sm font-medium text-[#052659] hover:bg-[#C1E8FF]/50 transition-all";
-const INPUT = "flex-1 px-4 py-2.5 rounded-xl border border-[#C1E8FF] text-sm outline-none focus:ring-2 focus:ring-[#052659]/30 bg-white/80 backdrop-blur-sm placeholder-[#7DA0CA]";
-const TABLE_HEADER = "bg-gradient-to-r from-[#052659] to-[#0A3A7E] text-white";
-const BADGE = (color) => `px-2.5 py-1 rounded-lg text-xs font-bold ${color}`;
+const CARD = "bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-white/60 transition-all duration-500 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 relative overflow-hidden";
+const CARD_HEADER_STYLE = "flex items-center justify-between mb-6 relative z-10 px-6 pt-6";
+const TITLE = "text-lg font-bold text-[#021024] tracking-tight";
+const SUBTITLE = "text-xs font-semibold text-[#5483B3] uppercase tracking-wider mt-0.5";
+const BADGE = (color) => `px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide ${color} shadow-sm`;
+const BTN_PRIMARY = "flex items-center gap-2 px-4 py-2 bg-[#052659] text-white rounded-xl hover:bg-[#021024] transition-all text-xs font-bold uppercase tracking-wide shadow-md hover:shadow-lg hover:-translate-y-0.5";
+const INPUT = "flex-1 px-4 py-2.5 rounded-xl border border-[#C1E8FF] text-sm outline-none focus:ring-2 focus:ring-[#052659]/30 bg-white/80 backdrop-blur-sm placeholder-[#7DA0CA] transition-all focus:border-[#052659]";
+const TABLE_HEADER = "bg-gradient-to-r from-[#052659] to-[#0A3A7E] text-white text-xs uppercase tracking-wider";
+
+// Animation Config
+const ANIMATION = {
+    duration: 1500,
+    easing: 'easeOutQuart',
+};
 
 // ═══════════════════════════════════════════════════════════
 // UTILITY COMPONENTS
@@ -29,85 +34,58 @@ const BADGE = (color) => `px-2.5 py-1 rounded-lg text-xs font-bold ${color}`;
 const Toast = ({ toast, onClose }) => {
     if (!toast) return null;
     return (
-        <div className={`fixed top-20 right-4 z-50 px-5 py-3 rounded-xl shadow-2xl text-white animate-fadeIn flex items-center gap-3 ${toast.type === 'error' ? 'bg-red-500' : 'bg-emerald-500'}`}>
-            <span className="font-medium text-sm">{toast.message}</span>
-            <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-lg"><XIcon className="w-3 h-3" /></button>
+        <div className={`fixed top-24 right-6 z-50 px-6 py-4 rounded-xl shadow-2xl text-white animate-fadeIn flex items-center gap-4 ${toast.type === 'error' ? 'bg-red-500/90 backdrop-blur-md border border-red-400' : 'bg-[#052659]/90 backdrop-blur-md border border-[#0A3A7E]'}`}>
+            <span className="font-semibold text-sm tracking-wide">{toast.message}</span>
+            <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-full transition-colors"><XIcon className="w-4 h-4" /></button>
         </div>
     );
 };
 
-const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, isDeleting }) => {
-    if (!isOpen) return null;
-    return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full animate-fadeIn" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-red-100 rounded-full"><TrashIcon className="w-5 h-5 text-red-600" /></div>
-                    <h3 className="text-lg font-bold text-[#021024]">{title}</h3>
-                </div>
-                <p className="text-[#5483B3] text-sm mb-6 leading-relaxed">{message}</p>
-                <div className="flex gap-3 justify-end">
-                    <button onClick={onClose} disabled={isDeleting} className="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm font-medium disabled:opacity-50">Cancel</button>
-                    <button onClick={onConfirm} disabled={isDeleting} className="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 text-sm font-medium disabled:opacity-50 flex items-center gap-2">
-                        {isDeleting ? <><span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>Deleting...</> : 'Delete'}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const StatCard = ({ label, value, icon, color, bgColor, subtitle }) => (
-    <div className={CARD + " p-5 group hover:-translate-y-1"}>
-        <div className="flex items-start justify-between">
+const HeaderStats = ({ label, value, icon, color, loading }) => (
+    <div className={`${CARD} p-5 group`}>
+        <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-white/0 to-white/0 group-hover:from-white/50 group-hover:to-transparent rounded-bl-full transition-all duration-700"></div>
+        <div className="flex items-start justify-between relative z-10">
             <div>
-                <p className="text-xs font-bold text-[#7DA0CA] tracking-wider uppercase mb-1">{label}</p>
-                <p className="text-3xl font-extrabold text-[#021024]">{value ?? '—'}</p>
-                {subtitle && <p className="text-xs text-[#5483B3] mt-1">{subtitle}</p>}
+                <p className="text-[10px] font-bold text-[#5483B3] tracking-widest uppercase mb-2 group-hover:text-[#052659] transition-colors">{label}</p>
+                {loading ? (
+                    <div className="h-8 w-16 bg-gray-200 rounded animate-pulse"></div>
+                ) : (
+                    <p className="text-3xl font-black text-[#021024] tracking-tight group-hover:scale-105 transition-transform origin-left">{value}</p>
+                )}
             </div>
-            <div className={`p-3 rounded-xl ${bgColor} shadow-lg group-hover:scale-110 transition-transform`}>
-                {icon}
+            <div className={`p-3.5 rounded-xl bg-gradient-to-br ${color} shadow-lg shadow-${color.split('-')[1]}/30 group-hover:shadow-xl group-hover:scale-110 transition-all duration-500`}>
+                {loading ? <div className="w-6 h-6 bg-white/30 rounded animate-pulse" /> : React.cloneElement(icon, { className: "w-6 h-6 text-white" })}
             </div>
         </div>
     </div>
 );
+
+const AtRiskStudent = ({ student, totalLectures }) => {
+    const percentage = totalLectures > 0 ? Math.round((student.attendance_count / totalLectures) * 100) : 0;
+    return (
+        <div className="flex items-center justify-between p-3 rounded-xl bg-red-50/50 hover:bg-red-50 border border-red-100 transition-colors group">
+            <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center font-bold text-xs shadow-sm group-hover:scale-110 transition-transform">{student.name?.[0]}</div>
+                <div>
+                    <p className="text-sm font-bold text-gray-900">{student.name}</p>
+                    <p className="text-[10px] font-medium text-red-400">Attended: {student.attendance_count}/{totalLectures}</p>
+                </div>
+            </div>
+            <div className="text-right">
+                <span className="text-sm font-black text-red-600">{percentage}%</span>
+                <p className="text-[9px] font-bold text-red-300 uppercase tracking-wider">Critical</p>
+            </div>
+        </div>
+    );
+};
 
 const EmptyState = ({ icon, title, desc }) => (
-    <div className="text-center py-12">
-        <div className="inline-block p-4 bg-[#C1E8FF]/30 rounded-2xl mb-3">{icon}</div>
-        <p className="font-semibold text-[#052659]">{title}</p>
-        <p className="text-sm text-[#7DA0CA] mt-1">{desc}</p>
+    <div className="text-center py-16 animate-fadeIn">
+        <div className="inline-block p-5 bg-[#C1E8FF]/30 rounded-2xl mb-4 animate-bounce">{icon}</div>
+        <p className="font-bold text-[#052659] text-lg">{title}</p>
+        <p className="text-sm text-[#7DA0CA] mt-2 max-w-xs mx-auto">{desc}</p>
     </div>
 );
-
-// ═══════════════════════════════════════════════════════════
-// CHART THEME COLORS
-// ═══════════════════════════════════════════════════════════
-
-const CHART_COLORS = {
-    primary: '#052659',
-    secondary: '#5483B3',
-    accent: '#7DA0CA',
-    light: '#C1E8FF',
-    bg: '#021024',
-    palette: ['#052659', '#0E7C7B', '#17BEBB', '#5483B3', '#7DA0CA', '#FF6B6B', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE'],
-    gradientBlue: (ctx) => {
-        if (!ctx?.chart?.ctx) return '#052659';
-        const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
-        gradient.addColorStop(0, 'rgba(5, 38, 89, 0.8)');
-        gradient.addColorStop(1, 'rgba(5, 38, 89, 0.05)');
-        return gradient;
-    }
-};
-
-const chartDefaults = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: { labels: { font: { family: 'Inter', size: 11, weight: '600' }, color: '#5483B3', padding: 16, usePointStyle: true, pointStyleWidth: 8 } },
-        tooltip: { backgroundColor: '#021024', titleFont: { family: 'Inter', size: 12, weight: '700' }, bodyFont: { family: 'Inter', size: 11 }, padding: 12, cornerRadius: 10, displayColors: true, borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1 }
-    }
-};
 
 // ═══════════════════════════════════════════════════════════
 // TAB COMPONENTS
@@ -119,56 +97,64 @@ const UsersTab = ({ allUsers, onDelete, onDownload }) => {
 
     const filtered = useMemo(() => allUsers.filter(u => {
         const q = search.toLowerCase();
-        const match = !q || u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q) || u.id?.toLowerCase().includes(q) || u.roll_number?.toLowerCase().includes(q);
+        const match = !q || u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q) || u.roll_number?.toLowerCase().includes(q);
         return match && (roleFilter === 'all' || u.role === roleFilter);
     }), [allUsers, search, roleFilter]);
 
     return (
-        <div className="space-y-5 animate-fadeIn">
-            <div className="flex flex-wrap gap-2">
-                <span className={BADGE('bg-blue-100 text-blue-700')}>{allUsers.filter(u => u.role === 'teacher').length} Teachers</span>
-                <span className={BADGE('bg-emerald-100 text-emerald-700')}>{allUsers.filter(u => u.role === 'student').length} Students</span>
-                <span className={BADGE('bg-[#C1E8FF] text-[#052659]')}>{filtered.length} Shown</span>
+        <div className="space-y-6 animate-fadeInUp">
+            <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white/40 p-4 rounded-2xl backdrop-blur-sm border border-white/40 shadow-sm">
+                <div className="flex gap-2">
+                    <span className={BADGE('bg-blue-100 text-blue-800 border border-blue-200')}>Teachers: {allUsers.filter(u => u.role === 'teacher').length}</span>
+                    <span className={BADGE('bg-emerald-100 text-emerald-800 border border-emerald-200')}>Students: {allUsers.filter(u => u.role === 'student').length}</span>
+                </div>
+                <div className="flex gap-3 w-full sm:w-auto">
+                    <input type="text" placeholder="Search users..." className={INPUT} value={search} onChange={e => setSearch(e.target.value)} />
+                    <select className={INPUT + " sm:max-w-[140px]"} value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
+                        <option value="all">All Roles</option>
+                        <option value="teacher">Teachers</option>
+                        <option value="student">Students</option>
+                    </select>
+                    <button onClick={onDownload} className={BTN_PRIMARY}><DownloadIcon className="w-4 h-4" /> Export</button>
+                </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-                <input type="text" placeholder="Search by name, email, ID..." className={INPUT} value={search} onChange={e => setSearch(e.target.value)} />
-                <select className={INPUT + " sm:max-w-[150px]"} value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
-                    <option value="all">All Roles</option>
-                    <option value="teacher">Teachers</option>
-                    <option value="student">Students</option>
-                </select>
-                <button onClick={onDownload} className={BTN_PRIMARY + " whitespace-nowrap"}><DownloadIcon className="w-4 h-4" />Export</button>
-            </div>
-            {filtered.length === 0 ? <EmptyState icon={<UsersIcon className="w-8 h-8 text-[#7DA0CA]" />} title="No users found" desc="Adjust your search or filter." /> : (
-                <div className={CARD + " overflow-hidden"}>
+
+            {filtered.length === 0 ? <EmptyState icon={<UsersIcon className="w-10 h-10 text-[#7DA0CA]" />} title="No users found" desc="Try adjusting your search or filters." /> : (
+                <div className={CARD + " overflow-visible"}>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
                             <thead><tr className={TABLE_HEADER}>
-                                <th className="px-5 py-3.5 font-semibold">User</th>
-                                <th className="px-5 py-3.5 font-semibold">Email</th>
-                                <th className="px-5 py-3.5 font-semibold">Role</th>
-                                <th className="px-5 py-3.5 font-semibold hidden md:table-cell">Roll/ID</th>
-                                <th className="px-5 py-3.5 font-semibold hidden lg:table-cell">Joined</th>
-                                <th className="px-5 py-3.5 font-semibold text-center w-16">⚙️</th>
+                                <th className="px-6 py-4 font-bold rounded-tl-xl">User</th>
+                                <th className="px-6 py-4 font-bold">Role</th>
+                                <th className="px-6 py-4 font-bold">Details</th>
+                                <th className="px-6 py-4 font-bold">Joined</th>
+                                <th className="px-6 py-4 font-bold text-center rounded-tr-xl">Action</th>
                             </tr></thead>
-                            <tbody className="divide-y divide-[#C1E8FF]/30">
+                            <tbody className="divide-y divide-blue-50">
                                 {filtered.map(u => (
-                                    <tr key={u.id} className="hover:bg-[#C1E8FF]/20 transition-colors">
-                                        <td className="px-5 py-3.5"><div className="flex items-center gap-3">
-                                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-md ${u.role === 'teacher' ? 'bg-[#052659]' : 'bg-[#5483B3]'}`}>{u.name?.[0]?.toUpperCase()}</div>
-                                            <span className="font-semibold text-[#021024]">{u.name}</span>
-                                        </div></td>
-                                        <td className="px-5 py-3.5 text-[#5483B3] text-xs">{u.email}</td>
-                                        <td className="px-5 py-3.5"><span className={BADGE(u.role === 'teacher' ? 'bg-[#052659]/10 text-[#052659]' : 'bg-[#5483B3]/10 text-[#5483B3]')}>{u.role}</span></td>
-                                        <td className="px-5 py-3.5 text-[#7DA0CA] font-mono text-xs hidden md:table-cell">{u.roll_number || u.id}</td>
-                                        <td className="px-5 py-3.5 text-[#7DA0CA] text-xs hidden lg:table-cell">{u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}</td>
-                                        <td className="px-5 py-3.5 text-center"><button onClick={() => onDelete(u.id, u.name)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"><TrashIcon className="w-4 h-4" /></button></td>
+                                    <tr key={u.id} className="hover:bg-blue-50/50 transition-colors group">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-md transition-transform group-hover:scale-110 ${u.role === 'teacher' ? 'bg-gradient-to-br from-[#052659] to-[#0A3A7E]' : 'bg-gradient-to-br from-[#5483B3] to-[#7DA0CA]'}`}>
+                                                    {u.name?.[0]?.toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-[#021024]">{u.name}</p>
+                                                    <p className="text-xs text-[#5483B3]">{u.email}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4"><span className={BADGE(u.role === 'teacher' ? 'bg-[#052659]/10 text-[#052659] border border-[#052659]/20' : 'bg-[#5483B3]/10 text-[#5483B3] border border-[#5483B3]/20')}>{u.role}</span></td>
+                                        <td className="px-6 py-4 text-[#5483B3] font-mono text-xs">{u.roll_number || u.enrollment_number || '—'}</td>
+                                        <td className="px-6 py-4 text-[#7DA0CA] text-xs font-mono">{u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            <button onClick={() => onDelete(u.id, u.name)} className="p-2 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all hover:scale-110"><TrashIcon className="w-4 h-4" /></button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
-                    <div className="px-5 py-2.5 bg-[#C1E8FF]/20 border-t border-[#C1E8FF]/40 text-xs text-[#7DA0CA] font-medium">Showing {filtered.length} of {allUsers.length}</div>
                 </div>
             )}
         </div>
@@ -182,53 +168,49 @@ const LecturesTab = ({ activeLectures, archivedLectures, onDelete, onDownload })
 
     const filtered = useMemo(() => {
         let list = filter === 'active' ? activeLectures : filter === 'archived' ? archivedLectures : all;
-        if (search) { const q = search.toLowerCase(); list = list.filter(l => l.name?.toLowerCase().includes(q) || l.subject?.toLowerCase().includes(q) || l.teacher_name?.toLowerCase().includes(q)); }
+        if (search) { const q = search.toLowerCase(); list = list.filter(l => l.name?.toLowerCase().includes(q) || l.subject?.toLowerCase().includes(q)); }
         return list;
     }, [activeLectures, archivedLectures, search, filter]);
 
     return (
-        <div className="space-y-5 animate-fadeIn">
-            <div className="flex flex-wrap gap-2">
-                <span className={BADGE('bg-emerald-100 text-emerald-700')}>{activeLectures.length} Active</span>
-                <span className={BADGE('bg-amber-100 text-amber-700')}>{archivedLectures.length} Archived</span>
-                <span className={BADGE('bg-[#C1E8FF] text-[#052659]')}>{all.length} Total</span>
+        <div className="space-y-6 animate-fadeInUp">
+            <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white/40 p-4 rounded-2xl backdrop-blur-sm border border-white/40 shadow-sm">
+                <div className="flex gap-2">
+                    <span className={BADGE('bg-emerald-100 text-emerald-800')}>Active: {activeLectures.length}</span>
+                    <span className={BADGE('bg-amber-100 text-amber-800')}>Archived: {archivedLectures.length}</span>
+                </div>
+                <div className="flex gap-3 w-full sm:w-auto">
+                    <input type="text" placeholder="Search lectures..." className={INPUT} value={search} onChange={e => setSearch(e.target.value)} />
+                    <select className={INPUT + " sm:max-w-[120px]"} value={filter} onChange={e => setFilter(e.target.value)}><option value="all">All</option><option value="active">Active</option><option value="archived">Archived</option></select>
+                    <button onClick={onDownload} className={BTN_PRIMARY}><DownloadIcon className="w-4 h-4" /> Export</button>
+                </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-                <input type="text" placeholder="Search lectures..." className={INPUT} value={search} onChange={e => setSearch(e.target.value)} />
-                <select className={INPUT + " sm:max-w-[160px]"} value={filter} onChange={e => setFilter(e.target.value)}>
-                    <option value="all">All Lectures</option>
-                    <option value="active">Active Only</option>
-                    <option value="archived">Archived Only</option>
-                </select>
-                <button onClick={onDownload} className={BTN_PRIMARY + " whitespace-nowrap"}><DownloadIcon className="w-4 h-4" />Export</button>
-            </div>
-            {filtered.length === 0 ? <EmptyState icon={<BookOpenIcon className="w-8 h-8 text-[#7DA0CA]" />} title="No lectures" desc="Lectures are preserved here even after auto-deletion." /> : (
-                <div className={CARD + " overflow-hidden"}>
+            {filtered.length === 0 ? <EmptyState icon={<BookOpenIcon className="w-10 h-10 text-[#7DA0CA]" />} title="No lectures found" desc="Create lectures to see them here." /> : (
+                <div className={CARD + " overflow-visible"}>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
                             <thead><tr className={TABLE_HEADER}>
-                                <th className="px-5 py-3.5 font-semibold">Lecture</th>
-                                <th className="px-5 py-3.5 font-semibold">Teacher</th>
-                                <th className="px-5 py-3.5 font-semibold hidden md:table-cell">Date</th>
-                                <th className="px-5 py-3.5 font-semibold text-center">Attend.</th>
-                                <th className="px-5 py-3.5 font-semibold text-center">Status</th>
-                                <th className="px-5 py-3.5 font-semibold text-center w-16">⚙️</th>
+                                <th className="px-6 py-4 font-bold rounded-tl-xl">Lecture</th>
+                                <th className="px-6 py-4 font-bold">Teacher</th>
+                                <th className="px-6 py-4 font-bold text-center">Date</th>
+                                <th className="px-6 py-4 font-bold text-center">Attd.</th>
+                                <th className="px-6 py-4 font-bold text-center">Status</th>
+                                <th className="px-6 py-4 font-bold text-center rounded-tr-xl">Action</th>
                             </tr></thead>
-                            <tbody className="divide-y divide-[#C1E8FF]/30">
-                                {filtered.map((l, i) => (
-                                    <tr key={`${l.status}-${l.id}`} className="hover:bg-[#C1E8FF]/20 transition-colors">
-                                        <td className="px-5 py-3.5"><div><p className="font-semibold text-[#021024]">{l.name}</p><p className="text-xs text-[#7DA0CA]">{l.subject || ''}</p></div></td>
-                                        <td className="px-5 py-3.5 text-[#5483B3] text-xs">{l.teacher_name || '—'}</td>
-                                        <td className="px-5 py-3.5 text-[#7DA0CA] text-xs hidden md:table-cell">{(l.date || l.created_at) ? new Date(l.date || l.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}</td>
-                                        <td className="px-5 py-3.5 text-center"><span className={BADGE((l.attendance_count || 0) > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500')}>{l.attendance_count || 0}</span></td>
-                                        <td className="px-5 py-3.5 text-center"><span className={BADGE(l.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700')}>{l.status === 'active' ? '● Live' : '📦 Archived'}</span></td>
-                                        <td className="px-5 py-3.5 text-center">{l.status === 'active' ? <button onClick={() => onDelete(l.id, l.name)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"><TrashIcon className="w-4 h-4" /></button> : <span className="text-[#C1E8FF]">—</span>}</td>
+                            <tbody className="divide-y divide-blue-50">
+                                {filtered.map(l => (
+                                    <tr key={`${l.status}-${l.id}`} className="hover:bg-blue-50/50 transition-colors">
+                                        <td className="px-6 py-4"><p className="font-bold text-[#021024]">{l.name}</p><p className="text-xs text-[#5483B3]">{l.subject}</p></td>
+                                        <td className="px-6 py-4 text-[#5483B3] text-xs">{l.teacher_name}</td>
+                                        <td className="px-6 py-4 text-center text-[#7DA0CA] font-mono text-xs">{new Date(l.date || l.created_at).toLocaleDateString()}</td>
+                                        <td className="px-6 py-4 text-center"><span className="font-bold text-[#052659] bg-[#C1E8FF] px-2 py-1 rounded-md">{l.attendance_count || 0}</span></td>
+                                        <td className="px-6 py-4 text-center"><span className={BADGE(l.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700')}>{l.status}</span></td>
+                                        <td className="px-6 py-4 text-center">{l.status === 'active' ? <button onClick={() => onDelete(l.id, l.name)} className="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg"><TrashIcon className="w-4 h-4" /></button> : <span className="text-gray-300">—</span>}</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
-                    <div className="px-5 py-2.5 bg-[#C1E8FF]/20 border-t border-[#C1E8FF]/40 text-xs text-[#7DA0CA] font-medium">Showing {filtered.length} lectures</div>
                 </div>
             )}
         </div>
@@ -238,53 +220,38 @@ const LecturesTab = ({ activeLectures, archivedLectures, onDelete, onDownload })
 const AttendanceTab = ({ activeAttendance, archivedAttendance, onDownload }) => {
     const [search, setSearch] = useState('');
     const all = [...activeAttendance, ...archivedAttendance];
-    const filtered = useMemo(() => {
-        if (!search) return all;
-        const q = search.toLowerCase();
-        return all.filter(r => r.student_name?.toLowerCase().includes(q) || r.lecture_name?.toLowerCase().includes(q) || r.roll_number?.toLowerCase().includes(q));
-    }, [activeAttendance, archivedAttendance, search]);
+    const filtered = all.filter(r => !search || r.student_name?.toLowerCase().includes(search.toLowerCase()) || r.lecture_name?.toLowerCase().includes(search.toLowerCase()));
 
     return (
-        <div className="space-y-5 animate-fadeIn">
-            <div className="flex flex-wrap gap-2">
-                <span className={BADGE('bg-emerald-100 text-emerald-700')}>{activeAttendance.length} Active</span>
-                <span className={BADGE('bg-amber-100 text-amber-700')}>{archivedAttendance.length} Archived</span>
-                <span className={BADGE('bg-[#C1E8FF] text-[#052659]')}>{all.length} Total</span>
+        <div className="space-y-6 animate-fadeInUp">
+            <div className="flex justify-between items-center bg-white/40 p-4 rounded-2xl backdrop-blur-sm border border-white/40 shadow-sm">
+                <span className={BADGE('bg-[#052659] text-white self-center')}>Total: {all.length}</span>
+                <div className="flex gap-3">
+                    <input type="text" placeholder="Search records..." className={INPUT} value={search} onChange={e => setSearch(e.target.value)} />
+                    <button onClick={onDownload} className={BTN_PRIMARY}><DownloadIcon className="w-4 h-4" /> Export</button>
+                </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-                <input type="text" placeholder="Search by student, lecture, roll no..." className={INPUT} value={search} onChange={e => setSearch(e.target.value)} />
-                <button onClick={onDownload} className={BTN_PRIMARY + " whitespace-nowrap"}><DownloadIcon className="w-4 h-4" />Export</button>
-            </div>
-            {filtered.length === 0 ? <EmptyState icon={<BarChartIcon className="w-8 h-8 text-[#7DA0CA]" />} title="No records" desc="Records appear when students mark attendance." /> : (
-                <div className={CARD + " overflow-hidden"}>
+            {filtered.length === 0 ? <EmptyState icon={<ActivityIcon className="w-10 h-10 text-[#7DA0CA]" />} title="No records" desc="Attendance logs will appear here." /> : (
+                <div className={CARD + " overflow-visible"}>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
                             <thead><tr className={TABLE_HEADER}>
-                                <th className="px-5 py-3.5 font-semibold">Student</th>
-                                <th className="px-5 py-3.5 font-semibold hidden md:table-cell">Roll No.</th>
-                                <th className="px-5 py-3.5 font-semibold">Lecture</th>
-                                <th className="px-5 py-3.5 font-semibold text-center">Status</th>
-                                <th className="px-5 py-3.5 font-semibold hidden lg:table-cell">Time</th>
+                                <th className="px-6 py-4 font-bold rounded-tl-xl">Student</th>
+                                <th className="px-6 py-4 font-bold">Lecture</th>
+                                <th className="px-6 py-4 font-bold text-center">Status</th>
+                                <th className="px-6 py-4 font-bold text-center rounded-tr-xl">Time</th>
                             </tr></thead>
-                            <tbody className="divide-y divide-[#C1E8FF]/30">
-                                {filtered.slice(0, 200).map((r, i) => (
-                                    <tr key={`${r.record_status}-${r.id}-${i}`} className="hover:bg-[#C1E8FF]/20 transition-colors">
-                                        <td className="px-5 py-3.5"><div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-xl bg-[#052659] flex items-center justify-center text-white text-xs font-bold shadow-md">{r.student_name?.[0]?.toUpperCase()}</div>
-                                            <span className="font-medium text-[#021024]">{r.student_name}</span>
-                                        </div></td>
-                                        <td className="px-5 py-3.5 text-[#7DA0CA] font-mono text-xs hidden md:table-cell">{r.roll_number || '—'}</td>
-                                        <td className="px-5 py-3.5 text-[#5483B3] text-xs">{r.lecture_name || '—'}</td>
-                                        <td className="px-5 py-3.5 text-center"><span className={BADGE('bg-emerald-100 text-emerald-700')}>{r.status}</span></td>
-                                        <td className="px-5 py-3.5 text-[#7DA0CA] text-xs hidden lg:table-cell">{r.timestamp ? new Date(r.timestamp).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+                            <tbody className="divide-y divide-blue-50">
+                                {filtered.slice(0, 100).map((r, i) => (
+                                    <tr key={i} className="hover:bg-blue-50/50 transition-colors">
+                                        <td className="px-6 py-4"><p className="font-bold text-[#021024]">{r.student_name}</p><p className="text-xs text-[#5483B3] font-mono">{r.roll_number}</p></td>
+                                        <td className="px-6 py-4 text-[#5483B3] text-xs">{r.lecture_name}</td>
+                                        <td className="px-6 py-4 text-center"><span className={BADGE('bg-emerald-100 text-emerald-700')}>{r.status}</span></td>
+                                        <td className="px-6 py-4 text-center text-[#7DA0CA] text-xs font-mono">{new Date(r.timestamp).toLocaleString()}</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-                    </div>
-                    <div className="px-5 py-2.5 bg-[#C1E8FF]/20 border-t border-[#C1E8FF]/40 text-xs text-[#7DA0CA] font-medium flex justify-between">
-                        <span>Showing {Math.min(filtered.length, 200)} of {filtered.length}</span>
-                        {filtered.length > 200 && <span className="text-[#052659] font-semibold">Export CSV for full data</span>}
                     </div>
                 </div>
             )}
@@ -293,415 +260,190 @@ const AttendanceTab = ({ activeAttendance, archivedAttendance, onDownload }) => 
 };
 
 // ═══════════════════════════════════════════════════════════
-// MAIN ADMIN DASHBOARD
+// MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════
 
 export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }) => {
     const [activeTab, setActiveTab] = useState(initialTab);
-    const [stats, setStats] = useState({});
-    const [allUsers, setAllUsers] = useState([]);
-    const [activeLectures, setActiveLectures] = useState([]);
-    const [archivedLectures, setArchivedLectures] = useState([]);
-    const [activeAttendance, setActiveAttendance] = useState([]);
-    const [archivedAttendance, setArchivedAttendance] = useState([]);
-    const [trendData, setTrendData] = useState([]);
-    const [topStudents, setTopStudents] = useState([]);
-    const [subjectData, setSubjectData] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isDeleting, setIsDeleting] = useState(false);
+    const [data, setData] = useState({ stats: {}, users: [], lectures: [], attendance: [], trend: [], topStudents: [], subjects: [] });
+    const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState(null);
-    const [confirmModal, setConfirmModal] = useState({ isOpen: false });
 
-    const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+    const headers = { 'Authorization': `Bearer ${token}` };
+    const showToast = (message, type = 'success') => { setToast({ message, type }); setTimeout(() => setToast(null), 4000); };
+
     useEffect(() => { setActiveTab(initialTab); }, [initialTab]);
-    const showToast = (msg, type = 'success') => { setToast({ message: msg, type }); setTimeout(() => setToast(null), 4000); };
 
-    // ─── Data Fetching ─────────────────────────────────────
-    const fetchAllData = async () => {
-        setIsLoading(true);
+    const loadData = async () => {
+        setLoading(true);
         try {
-            const endpoints = [
-                'dashboard-stats', 'all-users', 'combined-lectures',
-                'combined-attendance', 'attendance-trend', 'top-students', 'attendance-by-subject'
-            ];
-            const results = await Promise.all(endpoints.map(ep => fetch(`${API_URL}/admin/${ep}`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null)));
+            const endpoints = ['dashboard-stats', 'all-users', 'combined-lectures', 'combined-attendance', 'attendance-trend', 'top-students', 'attendance-by-subject'];
+            const responses = await Promise.all(endpoints.map(ep => fetch(`${API_URL}/admin/${ep}`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null)));
 
-            const [s, u, l, a, t, ts, sb] = results;
-            if (s) setStats(s);
-            if (u) setAllUsers(u);
-            if (l) { setActiveLectures(l.active || []); setArchivedLectures(l.archived || []); }
-            if (a) { setActiveAttendance(a.active || []); setArchivedAttendance(a.archived || []); }
-            if (t) setTrendData(t);
-            if (ts) setTopStudents(ts);
-            if (sb) setSubjectData(sb);
+            const [stats, users, lectures, attendance, trend, topStudents, subjects] = responses;
+            setData({
+                stats: stats || {},
+                users: users || [],
+                lectures: lectures ? [...(lectures.active || []), ...(lectures.archived || [])] : [],
+                attendance: attendance ? [...(attendance.active || []), ...(attendance.archived || [])] : [],
+                trend: trend || [],
+                topStudents: topStudents || [],
+                subjects: subjects || []
+            });
         } catch (e) { showToast('Failed to load data', 'error'); }
-        setIsLoading(false);
+        setLoading(false);
     };
 
-    useEffect(() => { fetchAllData(); }, []);
+    useEffect(() => { loadData(); }, []);
 
-    // ─── Delete Handlers ───────────────────────────────────
-    const handleDeleteUser = (userId, userName) => {
-        setConfirmModal({
-            isOpen: true, title: 'Delete User', message: `Permanently delete "${userName}" and all related data?`,
-            onConfirm: async () => {
-                setIsDeleting(true);
-                try { const r = await fetch(`${API_URL}/admin/users/${userId}`, { method: 'DELETE', headers }); const d = await r.json(); if (!r.ok) throw new Error(d.error); showToast(d.message); await fetchAllData(); } catch (e) { showToast(e.message, 'error'); }
-                setIsDeleting(false); setConfirmModal({ isOpen: false });
-            }
-        });
+    // Handlers
+    const handleDeleteUser = async (id, name) => {
+        if (!confirm(`Delete user ${name}? This cannot be undone.`)) return;
+        try {
+            const res = await fetch(`${API_URL}/admin/users/${id}`, { method: 'DELETE', headers });
+            if (res.ok) { showToast('User deleted'); loadData(); }
+            else showToast('Failed to delete', 'error');
+        } catch (e) { showToast('Error deleting user', 'error'); }
     };
 
-    const handleDeleteLecture = (lectureId, lectureName) => {
-        setConfirmModal({
-            isOpen: true, title: 'Delete Lecture', message: `Delete "${lectureName}"? It will be archived automatically.`,
-            onConfirm: async () => {
-                setIsDeleting(true);
-                try { const r = await fetch(`${API_URL}/admin/lectures/${lectureId}`, { method: 'DELETE', headers }); const d = await r.json(); if (!r.ok) throw new Error(d.error); showToast(d.message); await fetchAllData(); } catch (e) { showToast(e.message, 'error'); }
-                setIsDeleting(false); setConfirmModal({ isOpen: false });
-            }
-        });
+    const handleDeleteLecture = async (id, name) => {
+        if (!confirm(`Delete lecture ${name}? It will be archived.`)) return;
+        try {
+            const res = await fetch(`${API_URL}/admin/lectures/${id}`, { method: 'DELETE', headers });
+            if (res.ok) { showToast('Lecture archived'); loadData(); }
+            else showToast('Failed to delete', 'error');
+        } catch (e) { showToast('Error deleting lecture', 'error'); }
     };
 
-    // ─── CSV Helpers ───────────────────────────────────────
-    const downloadCSV = (data, filename, cols) => {
-        if (!data.length) { showToast('No data to export', 'error'); return; }
-        const h = cols.map(c => c.label).join(',');
-        const rows = data.map(r => cols.map(c => `"${(r[c.key] ?? '').toString().replace(/"/g, '""')}"`).join(','));
-        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\uFEFF' + [h, ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' }));
-        a.download = filename; a.click(); showToast(`Downloaded ${filename}`);
+    const downloadCSV = (dataItems, filename) => {
+        if (!dataItems.length) { showToast('No data to export', 'error'); return; }
+        const headers = Object.keys(dataItems[0]).join(',');
+        const rows = dataItems.map(obj => Object.values(obj).map(v => `"${v}"`).join(',')).join('\n');
+        const blob = new Blob([headers + '\n' + rows], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
     };
 
-    const downloadUsers = () => downloadCSV(allUsers, `users_${new Date().toISOString().slice(0, 10)}.csv`, [{ key: 'id', label: 'ID' }, { key: 'name', label: 'Name' }, { key: 'email', label: 'Email' }, { key: 'role', label: 'Role' }, { key: 'roll_number', label: 'Roll No' }, { key: 'created_at', label: 'Joined' }]);
-    const downloadLectures = () => downloadCSV([...activeLectures, ...archivedLectures], `lectures_${new Date().toISOString().slice(0, 10)}.csv`, [{ key: 'name', label: 'Lecture' }, { key: 'subject', label: 'Subject' }, { key: 'teacher_name', label: 'Teacher' }, { key: 'date', label: 'Date' }, { key: 'attendance_count', label: 'Attendance' }, { key: 'status', label: 'Status' }]);
-    const downloadAttendance = () => downloadCSV([...activeAttendance, ...archivedAttendance], `attendance_${new Date().toISOString().slice(0, 10)}.csv`, [{ key: 'student_name', label: 'Student' }, { key: 'roll_number', label: 'Roll No' }, { key: 'lecture_name', label: 'Lecture' }, { key: 'status', label: 'Status' }, { key: 'timestamp', label: 'Time' }]);
+    // Derived Analytics & Charts
+    const totalLectures = data.lectures.filter(l => l.status === 'active').length + data.lectures.filter(l => l.status === 'archived').length || 1;
+    const atRiskStudents = data.topStudents.filter(s => (parseInt(s.attendance_count) / totalLectures) < 0.75).slice(0, 5);
 
-    // ─── Chart Data ────────────────────────────────────────
-    const lineChartData = {
-        labels: trendData.map(d => new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })),
+    const gradient = (ctx, colorStart, colorEnd) => {
+        const g = ctx.createLinearGradient(0, 0, 0, 400);
+        g.addColorStop(0, colorStart); g.addColorStop(1, colorEnd);
+        return g;
+    };
+
+    const lineData = {
+        labels: data.trend.map(d => new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })),
         datasets: [{
-            label: 'Attendance',
-            data: trendData.map(d => d.count),
+            label: 'Attendance Velocity',
+            data: data.trend.map(d => d.count),
+            backgroundColor: (ctx) => gradient(ctx.chart.ctx, 'rgba(5, 38, 89, 0.4)', 'rgba(5, 38, 89, 0.0)'),
             borderColor: '#052659',
-            backgroundColor: function (context) {
-                const chart = context.chart;
-                const { ctx, chartArea } = chart;
-                if (!chartArea) return 'rgba(5,38,89,0.1)';
-                const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                gradient.addColorStop(0, 'rgba(5,38,89,0.3)');
-                gradient.addColorStop(1, 'rgba(193,232,255,0.05)');
-                return gradient;
-            },
             borderWidth: 3,
+            pointBackgroundColor: '#fff',
             fill: true,
-            tension: 0.4,
-            pointRadius: 4,
-            pointBackgroundColor: '#052659',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointHoverRadius: 7,
-            pointHoverBorderWidth: 3
+            tension: 0.4
         }]
     };
 
-    const lineChartOptions = {
-        ...chartDefaults,
-        scales: {
-            x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 10 }, color: '#7DA0CA', maxRotation: 45 } },
-            y: { beginAtZero: true, grid: { color: 'rgba(193,232,255,0.3)' }, ticks: { font: { family: 'Inter', size: 10 }, color: '#7DA0CA', stepSize: 1 } }
-        },
-        plugins: { ...chartDefaults.plugins, legend: { display: false } }
-    };
-
-    const barChartData = {
-        labels: subjectData.map(d => d.subject?.length > 12 ? d.subject.slice(0, 12) + '…' : d.subject),
+    const barData = {
+        labels: data.subjects.slice(0, 6).map(s => s.subject?.substring(0, 10) + '...'),
         datasets: [{
-            label: 'Attendance Count',
-            data: subjectData.map(d => parseInt(d.attendance_count)),
-            backgroundColor: CHART_COLORS.palette.slice(0, subjectData.length),
-            borderRadius: 8,
-            borderSkipped: false,
-            barThickness: 32,
-            maxBarThickness: 40
+            label: 'Avg Attendance',
+            data: data.subjects.slice(0, 6).map(s => s.attendance_count),
+            backgroundColor: ['#052659', '#0E7C7B', '#17BEBB', '#5483B3', '#7DA0CA', '#FF6B6B'],
+            borderRadius: 6,
+            barThickness: 30
         }]
     };
 
-    const barChartOptions = {
-        ...chartDefaults,
-        indexAxis: 'x',
-        scales: {
-            x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 10, weight: '600' }, color: '#5483B3' } },
-            y: { beginAtZero: true, grid: { color: 'rgba(193,232,255,0.3)' }, ticks: { font: { family: 'Inter', size: 10 }, color: '#7DA0CA', stepSize: 1 } }
-        },
-        plugins: { ...chartDefaults.plugins, legend: { display: false } }
-    };
+    // ─── RENDER ───────────────────────────────────────────────
 
-    const pieChartData = {
-        labels: ['Teachers', 'Students'],
-        datasets: [{
-            data: [stats.total_teachers || 0, stats.total_students || 0],
-            backgroundColor: ['#052659', '#5483B3'],
-            borderColor: ['#fff', '#fff'],
-            borderWidth: 3,
-            hoverOffset: 8,
-            spacing: 2
-        }]
-    };
-
-    const pieChartOptions = {
-        ...chartDefaults,
-        cutout: '0%',
-        plugins: { ...chartDefaults.plugins, legend: { position: 'bottom', labels: { ...chartDefaults.plugins.legend.labels, padding: 20, boxWidth: 12, boxHeight: 12 } } }
-    };
-
-    const doughnutChartData = {
-        labels: ['Active Lectures', 'Archived Lectures'],
-        datasets: [{
-            data: [stats.active_lectures || 0, stats.archived_lectures || 0],
-            backgroundColor: ['#0E7C7B', '#7DA0CA'],
-            borderColor: '#fff',
-            borderWidth: 3,
-            hoverOffset: 8,
-            spacing: 2
-        }]
-    };
-
-    const doughnutChartOptions = {
-        ...chartDefaults,
-        cutout: '65%',
-        plugins: { ...chartDefaults.plugins, legend: { position: 'bottom', labels: { ...chartDefaults.plugins.legend.labels, padding: 20, boxWidth: 12, boxHeight: 12 } } }
-    };
-
-    // ─── Tab Config ────────────────────────────────────────
-    const totalLectures = activeLectures.length + archivedLectures.length;
-    const totalAttendance = activeAttendance.length + archivedAttendance.length;
-    const tabs = [
-        { id: 'overview', label: 'Overview', icon: <ActivityIcon className="w-4 h-4" /> },
-        { id: 'analytics', label: 'Analytics', icon: <BarChartIcon className="w-4 h-4" /> },
-        { id: 'users', label: `Users (${allUsers.length})`, icon: <UsersIcon className="w-4 h-4" /> },
-        { id: 'lectures', label: `Lectures (${totalLectures})`, icon: <BookOpenIcon className="w-4 h-4" /> },
-        { id: 'attendance', label: `Attendance (${totalAttendance})`, icon: <BarChartIcon className="w-4 h-4" /> }
-    ];
-
-    // ─── Loading State ─────────────────────────────────────
-    if (isLoading) return (
-        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#C1E8FF] via-[#C1E8FF]/60 to-[#7DA0CA]/30">
-            <div className="text-center">
-                <div className="animate-spin rounded-full h-14 w-14 border-4 border-white/40 border-t-[#052659] mx-auto mb-4"></div>
-                <p className="text-[#052659] font-bold text-lg">Loading Admin Panel</p>
-                <p className="text-[#5483B3] text-sm mt-1">Fetching system data...</p>
+    if (loading) return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#C1E8FF] via-[#E8F6FF] to-[#7DA0CA]/20">
+            <div className="w-16 h-16 rounded-2xl bg-white/50 backdrop-blur-md shadow-xl flex items-center justify-center animate-bounce mb-4">
+                <ShieldIcon className="w-8 h-8 text-[#052659]" />
             </div>
+            <p className="text-[#052659] font-bold text-lg animate-pulse">Loading Analytics Engine...</p>
         </div>
     );
 
-    // ─── Render ────────────────────────────────────────────
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#C1E8FF] via-[#C1E8FF]/60 to-[#7DA0CA]/30">
+        <div className="min-h-screen bg-gradient-to-br from-[#C1E8FF] via-[#E8F6FF] to-[#7DA0CA]/20 p-4 md:p-8">
             <Toast toast={toast} onClose={() => setToast(null)} />
-            <ConfirmModal isOpen={confirmModal.isOpen} onClose={() => !isDeleting && setConfirmModal({ isOpen: false })} onConfirm={confirmModal.onConfirm} title={confirmModal.title} message={confirmModal.message} isDeleting={isDeleting} />
 
-            <div className="max-w-[1440px] mx-auto p-4 md:p-6 lg:p-8">
-                {/* ─── Header ──────────────────────────────── */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-                    <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-gradient-to-br from-[#052659] to-[#0A3A7E] rounded-2xl flex items-center justify-center shadow-xl shadow-[#052659]/30">
-                            <ShieldIcon className="w-7 h-7 text-white" />
-                        </div>
-                        <div>
-                            <p className="text-[#5483B3] text-sm font-medium">Welcome back 👋</p>
-                            <h1 className="text-2xl md:text-3xl font-extrabold text-[#021024]">{user.name}</h1>
-                        </div>
+            {/* Header */}
+            <div className="max-w-[1600px] mx-auto mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fadeInDown">
+                <div className="flex items-center gap-5">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#052659] to-[#0A3A7E] flex items-center justify-center shadow-2xl shadow-[#052659]/30 text-white transform rotate-3 hover:rotate-0 transition-all duration-500">
+                        <ShieldIcon className="w-8 h-8" />
                     </div>
-                    <div className="flex gap-3">
-                        <button onClick={fetchAllData} className={BTN_SECONDARY}>🔄 Refresh</button>
+                    <div>
+                        <p className="text-[#5483B3] font-bold text-xs uppercase tracking-widest mb-1">System Admin</p>
+                        <h1 className="text-3xl font-black text-[#021024] tracking-tight">{user.name}</h1>
                     </div>
                 </div>
 
-                {/* ─── Tabs ────────────────────────────────── */}
-                <div className="flex gap-2 mb-6 overflow-x-auto pb-1 scrollbar-hide">
-                    {tabs.map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${activeTab === tab.id
-                                    ? 'bg-[#052659] text-white shadow-lg shadow-[#052659]/30'
-                                    : 'bg-white/80 text-[#052659] hover:bg-white border border-white/60 backdrop-blur-sm'}`}>
-                            {tab.icon} {tab.label}
+                <div className="flex bg-white/60 backdrop-blur-md p-1.5 rounded-2xl shadow-sm border border-white/50">
+                    {['overview', 'analytics', 'users', 'lectures', 'attendance'].map(tab => (
+                        <button key={tab} onClick={() => setActiveTab(tab)}
+                            className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${activeTab === tab
+                                ? 'bg-[#052659] text-white shadow-lg shadow-[#052659]/30 scale-105'
+                                : 'text-[#5483B3] hover:bg-white/50'}`}>
+                            {tab}
                         </button>
                     ))}
+                    <button onClick={loadData} className="ml-2 px-3 hover:bg-white/50 rounded-xl" title="Refresh"><ActivityIcon className="w-4 h-4 text-[#052659]" /></button>
                 </div>
+            </div>
 
-                {/* ═══ OVERVIEW TAB ═══ */}
+            <div className="max-w-[1600px] mx-auto animate-fadeInUp">
+
+                {/* ═══ OVERVIEW ═══ */}
                 {activeTab === 'overview' && (
-                    <div className="space-y-6 animate-fadeIn">
-                        {/* Stats */}
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                            <StatCard label="TOTAL STUDENTS" value={stats.total_students || 0} subtitle="Enrolled" icon={<GraduationCapIcon className="w-6 h-6 text-white" />} bgColor="bg-gradient-to-br from-[#052659] to-[#0A3A7E]" />
-                            <StatCard label="TOTAL TEACHERS" value={stats.total_teachers || 0} subtitle="Active" icon={<UserIcon className="w-6 h-6 text-white" />} bgColor="bg-gradient-to-br from-[#5483B3] to-[#7DA0CA]" />
-                            <StatCard label="TOTAL LECTURES" value={stats.total_lectures || 0} subtitle={`${stats.active_lectures || 0} active · ${stats.archived_lectures || 0} archived`} icon={<BookOpenIcon className="w-6 h-6 text-white" />} bgColor="bg-gradient-to-br from-[#0E7C7B] to-[#17BEBB]" />
-                            <StatCard label="ATTENDANCE RECORDS" value={stats.total_attendance_records || 0} subtitle="Marked" icon={<BarChartIcon className="w-6 h-6 text-white" />} bgColor="bg-gradient-to-br from-[#FF6B6B] to-[#FFA07A]" />
+                    <div className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <HeaderStats label="Total Students" value={data.stats.total_students} icon={<GraduationCapIcon />} color="from-[#052659] to-[#0A3A7E]" loading={loading} />
+                            <HeaderStats label="Total Teachers" value={data.stats.total_teachers} icon={<UserIcon />} color="from-[#0E7C7B] to-[#17BEBB]" loading={loading} />
+                            <HeaderStats label="Lectures Delivered" value={data.stats.total_lectures} icon={<BookOpenIcon />} color="from-[#6A0572] to-[#AB0A8E]" loading={loading} />
+                            <HeaderStats label="Attendance Logs" value={data.stats.total_attendance_records} icon={<ActivityIcon />} color="from-[#FF6B6B] to-[#FF8E53]" loading={loading} />
                         </div>
 
-                        {/* Line Chart + Pie Chart */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            <div className={CARD + " p-5 lg:col-span-2"}>
-                                <div className={CARD_HEADER}>
-                                    <div><h3 className={CARD_TITLE}>Attendance Trend</h3><p className={CARD_SUBTITLE}>Last 30 days</p></div>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div className={`${CARD} lg:col-span-2 p-6`}>
+                                <div className={CARD_HEADER_STYLE}>
+                                    <div><h2 className={TITLE}>Attendance Velocity</h2><p className={SUBTITLE}>30-Day Performance Trend</p></div>
+                                    <div className="flex gap-2"><button className="p-2 hover:bg-gray-100 rounded-lg"><CalendarIcon className="w-4 h-4 text-gray-500" /></button></div>
                                 </div>
-                                <div className="h-[280px]">
-                                    {trendData.length > 0 ? <Line data={lineChartData} options={lineChartOptions} /> : <EmptyState icon={<ActivityIcon className="w-6 h-6 text-[#7DA0CA]" />} title="No trend data" desc="Data will appear as attendance records are created" />}
-                                </div>
+                                <div className="h-[350px] w-full"><Line data={lineData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { borderDash: [4, 4], color: '#e5e7eb' }, ticks: { padding: 10 } }, x: { grid: { display: false } } }, animation: ANIMATION }} /></div>
                             </div>
-                            <div className={CARD + " p-5"}>
-                                <div className={CARD_HEADER}>
-                                    <div><h3 className={CARD_TITLE}>Users Distribution</h3><p className={CARD_SUBTITLE}>Teachers vs Students</p></div>
+                            <div className="space-y-6">
+                                <div className={`${CARD} p-6`}>
+                                    <div className={CARD_HEADER_STYLE}><div><h2 className={TITLE}>Subject Leaderboard</h2><p className={SUBTITLE}>Avg Attendance</p></div></div>
+                                    <div className="h-[200px]"><Bar data={barData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } }, animation: { ...ANIMATION, delay: 500 } }} /></div>
                                 </div>
-                                <div className="h-[280px] flex items-center justify-center">
-                                    {(stats.total_teachers || stats.total_students) ? <Pie data={pieChartData} options={pieChartOptions} /> : <EmptyState icon={<UsersIcon className="w-6 h-6 text-[#7DA0CA]" />} title="No users" desc="" />}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Top Students + Recent Activity */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div className={CARD + " p-5"}>
-                                <div className={CARD_HEADER}>
-                                    <div><h3 className={CARD_TITLE}>Top Attendees</h3><p className={CARD_SUBTITLE}>By attendance count</p></div>
-                                </div>
-                                {topStudents.length === 0 ? <EmptyState icon={<GraduationCapIcon className="w-6 h-6 text-[#7DA0CA]" />} title="No data yet" desc="" /> : (
-                                    <div className="space-y-2">
-                                        {['🥇', '🥈', '🥉'].concat(Array(7).fill('')).slice(0, topStudents.length).map((medal, i) => {
-                                            const s = topStudents[i]; if (!s) return null;
-                                            return (
-                                                <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#C1E8FF]/30 transition-colors">
-                                                    <span className="text-lg w-8 text-center">{medal || `${i + 1}.`}</span>
-                                                    <div className="w-8 h-8 rounded-lg bg-[#052659] flex items-center justify-center text-white text-xs font-bold">{s.name?.[0]?.toUpperCase()}</div>
-                                                    <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-[#021024] truncate">{s.name}</p><p className="text-xs text-[#7DA0CA]">{s.roll_number || s.id}</p></div>
-                                                    <span className="text-xs font-bold text-[#052659] bg-[#C1E8FF] px-3 py-1 rounded-full">{s.attendance_count}</span>
-                                                </div>
-                                            );
-                                        })}
+                                <div className={`${CARD} p-6 bg-red-50/30 border-red-100`}>
+                                    <div className={CARD_HEADER_STYLE}>
+                                        <div><h2 className={TITLE} style={{ color: '#991B1B' }}>At-Risk Students</h2><p className={SUBTITLE} style={{ color: '#F87171' }}>&lt; 75% Attendance</p></div>
+                                        <ShieldIcon className="w-5 h-5 text-red-500 animate-pulse" />
                                     </div>
-                                )}
-                            </div>
-                            <div className={CARD + " p-5"}>
-                                <div className={CARD_HEADER}>
-                                    <div><h3 className={CARD_TITLE}>Recent Activity</h3><p className={CARD_SUBTITLE}>Latest attendance records</p></div>
-                                    {totalAttendance > 5 && <button onClick={() => setActiveTab('attendance')} className="text-xs text-[#052659] font-bold hover:underline">View all →</button>}
-                                </div>
-                                {totalAttendance === 0 ? <EmptyState icon={<ActivityIcon className="w-6 h-6 text-[#7DA0CA]" />} title="No activity" desc="Will update in real-time" /> : (
-                                    <div className="space-y-2">
-                                        {[...activeAttendance, ...archivedAttendance].slice(0, 6).map((r, i) => (
-                                            <div key={i} className="flex items-center justify-between p-3 bg-[#C1E8FF]/15 rounded-xl hover:bg-[#C1E8FF]/30 transition-colors">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-lg bg-[#5483B3] flex items-center justify-center text-white text-xs font-bold">{r.student_name?.[0]?.toUpperCase()}</div>
-                                                    <div><p className="text-sm font-semibold text-[#021024]">{r.student_name}</p><p className="text-xs text-[#7DA0CA]">{r.lecture_name}</p></div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className={BADGE('bg-emerald-100 text-emerald-700')}>{r.status}</span>
-                                                    <p className="text-[10px] text-[#7DA0CA] mt-1">{r.timestamp ? new Date(r.timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : ''}</p>
-                                                </div>
-                                            </div>
-                                        ))}
+                                    <div className="space-y-3">
+                                        {atRiskStudents.length > 0 ? atRiskStudents.map(s => <AtRiskStudent key={s.id} student={s} totalLectures={totalLectures} />) : <p className="text-center text-gray-400 text-sm py-4">All students are performing well! 🎉</p>}
                                     </div>
-                                )}
+                                </div>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* ═══ ANALYTICS TAB ═══ */}
-                {activeTab === 'analytics' && (
-                    <div className="space-y-6 animate-fadeIn">
-                        {/* Top Stats Bar */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className={CARD + " p-4 text-center"}>
-                                <p className="text-3xl font-extrabold text-[#052659]">{stats.total_students || 0}</p>
-                                <p className="text-xs font-bold text-[#7DA0CA] mt-1">STUDENTS</p>
-                            </div>
-                            <div className={CARD + " p-4 text-center"}>
-                                <p className="text-3xl font-extrabold text-[#052659]">{stats.total_teachers || 0}</p>
-                                <p className="text-xs font-bold text-[#7DA0CA] mt-1">TEACHERS</p>
-                            </div>
-                            <div className={CARD + " p-4 text-center"}>
-                                <p className="text-3xl font-extrabold text-[#0E7C7B]">{stats.total_lectures || 0}</p>
-                                <p className="text-xs font-bold text-[#7DA0CA] mt-1">LECTURES</p>
-                            </div>
-                            <div className={CARD + " p-4 text-center"}>
-                                <p className="text-3xl font-extrabold text-[#FF6B6B]">{stats.total_attendance_records || 0}</p>
-                                <p className="text-xs font-bold text-[#7DA0CA] mt-1">ATTENDANCE</p>
-                            </div>
-                        </div>
+                {/* ═══ OTHER TABS ═══ */}
+                {activeTab === 'analytics' && <div className="text-center py-20 text-gray-400">Detailed Full-Screen Analytics Module Coming Soon</div>}
+                {activeTab === 'users' && <UsersTab allUsers={data.users} onDelete={handleDeleteUser} onDownload={() => downloadCSV(data.users, 'users.csv')} />}
+                {activeTab === 'lectures' && <LecturesTab activeLectures={data.lectures.filter(l => l.status === 'active')} archivedLectures={data.lectures.filter(l => l.status === 'archived')} onDelete={handleDeleteLecture} onDownload={() => downloadCSV(data.lectures, 'lectures.csv')} />}
+                {activeTab === 'attendance' && <AttendanceTab activeAttendance={data.attendance} archivedAttendance={[]} onDownload={() => downloadCSV(data.attendance, 'attendance.csv')} />}
 
-                        {/* Line Chart Full Width */}
-                        <div className={CARD + " p-6"}>
-                            <div className={CARD_HEADER}>
-                                <div><h3 className="text-lg font-bold text-[#021024]">📈 Attendance Trend Report</h3><p className={CARD_SUBTITLE}>Daily attendance over the last 30 days</p></div>
-                            </div>
-                            <div className="h-[320px]">
-                                {trendData.length > 0 ? <Line data={lineChartData} options={lineChartOptions} /> : <EmptyState icon={<ActivityIcon className="w-8 h-8 text-[#7DA0CA]" />} title="No trend data yet" desc="Attendance trends will appear as records are created" />}
-                            </div>
-                        </div>
-
-                        {/* Bar Chart + Doughnut */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            <div className={CARD + " p-6 lg:col-span-2"}>
-                                <div className={CARD_HEADER}>
-                                    <div><h3 className="text-lg font-bold text-[#021024]">📊 Attendance by Subject</h3><p className={CARD_SUBTITLE}>Which subjects get the most attendance</p></div>
-                                </div>
-                                <div className="h-[300px]">
-                                    {subjectData.length > 0 ? <Bar data={barChartData} options={barChartOptions} /> : <EmptyState icon={<BarChartIcon className="w-8 h-8 text-[#7DA0CA]" />} title="No subject data" desc="Create lectures with subjects to see breakdown" />}
-                                </div>
-                            </div>
-                            <div className={CARD + " p-6"}>
-                                <div className={CARD_HEADER}>
-                                    <div><h3 className="text-lg font-bold text-[#021024]">🎯 Lecture Status</h3><p className={CARD_SUBTITLE}>Active vs Archived</p></div>
-                                </div>
-                                <div className="h-[300px] flex items-center justify-center">
-                                    {(stats.active_lectures || stats.archived_lectures) ? <Doughnut data={doughnutChartData} options={doughnutChartOptions} /> : <EmptyState icon={<BookOpenIcon className="w-8 h-8 text-[#7DA0CA]" />} title="No lectures" desc="" />}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Pie + Top Students */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            <div className={CARD + " p-6"}>
-                                <div className={CARD_HEADER}>
-                                    <div><h3 className="text-lg font-bold text-[#021024]">👥 User Distribution</h3><p className={CARD_SUBTITLE}>By role</p></div>
-                                </div>
-                                <div className="h-[280px] flex items-center justify-center">
-                                    {(stats.total_teachers || stats.total_students) ? <Pie data={pieChartData} options={pieChartOptions} /> : <EmptyState icon={<UsersIcon className="w-6 h-6 text-[#7DA0CA]" />} title="No users" desc="" />}
-                                </div>
-                            </div>
-                            <div className={CARD + " p-6 lg:col-span-2"}>
-                                <div className={CARD_HEADER}>
-                                    <div><h3 className="text-lg font-bold text-[#021024]">🏆 Top Students Leaderboard</h3><p className={CARD_SUBTITLE}>Students with highest attendance</p></div>
-                                </div>
-                                {topStudents.length === 0 ? <EmptyState icon={<GraduationCapIcon className="w-8 h-8 text-[#7DA0CA]" />} title="No attendance data" desc="Leaderboard populates as students attend lectures" /> : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                        {topStudents.slice(0, 10).map((s, i) => (
-                                            <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl bg-[#C1E8FF]/15 hover:bg-[#C1E8FF]/30 transition-colors">
-                                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-md ${i < 3 ? 'bg-gradient-to-br from-[#052659] to-[#0A3A7E]' : 'bg-[#5483B3]'}`}>
-                                                    {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-semibold text-[#021024] truncate">{s.name}</p>
-                                                    <p className="text-xs text-[#7DA0CA]">{s.roll_number || ''}</p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-lg font-extrabold text-[#052659]">{s.attendance_count}</p>
-                                                    <p className="text-[10px] text-[#7DA0CA]">classes</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === 'users' && <UsersTab allUsers={allUsers} onDelete={handleDeleteUser} onDownload={downloadUsers} />}
-                {activeTab === 'lectures' && <LecturesTab activeLectures={activeLectures} archivedLectures={archivedLectures} onDelete={handleDeleteLecture} onDownload={downloadLectures} />}
-                {activeTab === 'attendance' && <AttendanceTab activeAttendance={activeAttendance} archivedAttendance={archivedAttendance} onDownload={downloadAttendance} />}
             </div>
         </div>
     );
