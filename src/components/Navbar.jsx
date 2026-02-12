@@ -5,12 +5,12 @@ import { BookOpenIcon, LogOutIcon, BarChartIcon, CalendarDaysIcon, QrCodeIcon, S
 export const Navbar = ({ user, setView, onLogout }) => {
     if (!user) return null;
 
-    // UPDATED: Added admin nav links
+    // UPDATED: Added admin nav links with distinct views
     const navLinks = user.role === 'admin'
         ? [
             { name: 'Dashboard', view: 'adminHome', icon: <ActivityIcon className="w-5 h-5" /> },
-            { name: 'Users', view: 'adminHome', icon: <UsersIcon className="w-5 h-5" /> },
-            { name: 'Reports', view: 'adminHome', icon: <BarChartIcon className="w-5 h-5" /> }
+            { name: 'Users', view: 'adminUsers', icon: <UsersIcon className="w-5 h-5" /> },
+            { name: 'Reports', view: 'adminReports', icon: <BarChartIcon className="w-5 h-5" /> }
         ]
         : user.role === 'teacher'
             ? [

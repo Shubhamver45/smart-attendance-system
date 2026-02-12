@@ -233,7 +233,9 @@ export default function App() {
         if (user) {
             switch (view) {
                 // --- Admin Views ---
-                case 'adminHome': return <AdminDashboard user={user} token={token} setView={setView} />;
+                case 'adminHome': return <AdminDashboard user={user} token={token} setView={setView} initialTab="overview" />;
+                case 'adminUsers': return <AdminDashboard user={user} token={token} setView={setView} initialTab="users" />;
+                case 'adminReports': return <AdminDashboard user={user} token={token} setView={setView} initialTab="attendance" />;
 
                 // --- Teacher Views ---
                 case 'teacherHome': return <TeacherDashboard user={user} setView={setView} lectures={lectures} activeLecture={activeLecture} setActiveLecture={handleSetActiveLecture} token={token} allStudents={registeredStudents} />;
