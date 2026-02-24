@@ -1,0 +1,15 @@
+node_modules
+dist
+npm-debug.log
+.env
+.env.*
+.git
+.gitignore
+.vscode
+.idea
+README.md
+GEOFENCING_GUIDE.md
+GEOFENCING_SUMMARY.md
+TESTING_GUIDE.md
+coverage
+*.md
