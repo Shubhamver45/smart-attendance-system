@@ -24,10 +24,18 @@ export default function App() {
     const [isLoading, setIsLoading] = useState(true);
     const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
     const [lectureNotification, setLectureNotification] = useState(null);
+    const [serverWaking, setServerWaking] = useState(false);
 
     // --- EFFECT HOOKS ---
     useEffect(() => {
         const initializeApp = async () => {
+            // Wake up Render backend immediately (free tier spins down when idle).
+            // This ping starts the warm-up while the user is on the landing page.
+            setServerWaking(true);
+            fetch(`${API_URL}/health`)
+                .then(() => setServerWaking(false))
+                .catch(() => setServerWaking(false));
+
             // UPDATED: Use sessionStorage
             const storedToken = sessionStorage.getItem('token');
             const storedUser = JSON.parse(sessionStorage.getItem('user'));
@@ -268,6 +276,11 @@ export default function App() {
     return (
         <>
             <Navbar user={user} setView={setView} onLogout={handleLogout} />
+            {serverWaking && (
+                <div className="fixed top-0 left-0 right-0 bg-amber-500 text-white text-center py-2 text-sm z-50">
+                    ⏳ Server is starting up, please wait a moment (~30s on first visit)...
+                </div>
+            )}
             <div key={view} className="animate-fadeIn">
                 {renderContent()}
             </div>

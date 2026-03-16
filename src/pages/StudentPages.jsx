@@ -3,6 +3,8 @@ import { Html5QrcodeScanner } from 'html5-qrcode'; // Import the new scanner pac
 import { CalendarIcon, MapPinIcon, QrCodeIcon, CalendarDaysIcon } from '../components/Icons.jsx';
 import { getCurrentLocation, isWithinGeofence, formatDistance, calculateDistance } from '../utils/geolocation.js';
 
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
+
 // Internal sub-component for StudentDashboard stats
 const StatCard = ({ title, value, subtitle, color }) => {
     const colorClasses = { green: 'text-green-600', orange: 'text-orange-500', red: 'text-red-600' };
@@ -103,11 +105,26 @@ export const ScanQRCodePage = ({ setView, markAttendance, lectures }) => {
                     setScanResult(`Verifying location...`);
                     setLocationStatus('Getting your location...');
 
-                    // Find the lecture details
-                    const lecture = lectures.find(l => l.id === parseInt(lectureId));
+                    // Find the lecture details — try local cache first, then fetch fresh.
+                    // A new lecture created after login won't be in the local list.
+                    let lecture = lectures.find(l => l.id === parseInt(lectureId));
 
                     if (!lecture) {
-                        throw new Error("Lecture not found");
+                        setScanResult('Fetching lecture details...');
+                        setLocationStatus('Loading lecture info...');
+                        try {
+                            const freshRes = await fetch(`${API_URL}/student/lectures`);
+                            if (freshRes.ok) {
+                                const freshLectures = await freshRes.json();
+                                lecture = freshLectures.find(l => l.id === parseInt(lectureId));
+                            }
+                        } catch (fetchErr) {
+                            // Ignore, failure is handled below
+                        }
+                    }
+
+                    if (!lecture) {
+                        throw new Error("Lecture not found. It may have been removed.");
                     }
 
                     // Check if lecture has geofencing enabled
