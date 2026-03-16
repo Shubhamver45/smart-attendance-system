@@ -79,7 +79,7 @@ export const StudentDashboard = ({ setView, lectures, attendanceRecords, lecture
 };
 
 // CORRECTED: This is the in-app QR code scanner page with geofencing
-export const ScanQRCodePage = ({ setView, markAttendance, lectures }) => {
+export const ScanQRCodePage = ({ setView, markAttendance, lectures, token }) => {
     const [scanResult, setScanResult] = useState(null);
     const [isScanning, setIsScanning] = useState(true);
     const [locationStatus, setLocationStatus] = useState('');
@@ -113,7 +113,8 @@ export const ScanQRCodePage = ({ setView, markAttendance, lectures }) => {
                         setScanResult('Fetching lecture details...');
                         setLocationStatus('Loading lecture info...');
                         try {
-                            const freshRes = await fetch(`${API_URL}/student/lectures`);
+                            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                            const freshRes = await fetch(`${API_URL}/student/lectures`, { headers });
                             if (freshRes.ok) {
                                 const freshLectures = await freshRes.json();
                                 lecture = freshLectures.find(l => l.id === parseInt(lectureId));

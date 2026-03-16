@@ -253,7 +253,7 @@ export default function App() {
 
                 // --- Student Views ---
                 case 'studentHome': return <StudentDashboard user={user} setView={setView} lectures={lectures} attendanceRecords={attendanceRecords} lectureNotification={lectureNotification} onAttendNow={handleAttendFromNotification} />;
-                case 'scanQRCode': return <ScanQRCodePage setView={setView} markAttendance={markAttendance} lectures={lectures} />;
+                case 'scanQRCode': return <ScanQRCodePage setView={setView} markAttendance={markAttendance} lectures={lectures} token={token} />;
                 case 'viewSchedule': return <ViewSchedulePage setView={setView} lectures={lectures} />;
 
                 default:
@@ -275,12 +275,12 @@ export default function App() {
 
     return (
         <>
-            <Navbar user={user} setView={setView} onLogout={handleLogout} />
             {serverWaking && (
-                <div className="fixed top-0 left-0 right-0 bg-amber-500 text-white text-center py-2 text-sm z-50">
+                <div className="w-full bg-amber-500 text-white text-center py-2 text-sm sticky top-0 z-30">
                     ⏳ Server is starting up, please wait a moment (~30s on first visit)...
                 </div>
             )}
+            <Navbar user={user} setView={setView} onLogout={handleLogout} />
             <div key={view} className="animate-fadeIn">
                 {renderContent()}
             </div>
