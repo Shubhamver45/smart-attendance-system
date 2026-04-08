@@ -6,7 +6,7 @@ import { BarChartIcon, DownloadIcon, TrashIcon, UsersIcon, ActivityIcon, BookOpe
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler, RadialLinearScale);
 
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
+const API_URL = "https://attendence-backend-tfw2.onrender.com/api";
 
 // ═══════════════════════════════════════════════════════════
 // STYLES & ANIMATIONS
