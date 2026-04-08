@@ -68,15 +68,14 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to fetch report');
 
-            const headers = "Student ID,Roll Number,Enrollment Number,Name,Time Attended\n";
+            const headers = "Sr. No,Roll Number,Enrollment Number,Name,Time Attended,Status\n";
             let rows = "";
 
             if (data.length > 0) {
-                rows = data.map(row =>
-                    `${row.student_id},${row.roll_number || 'N/A'},${row.enrollment_number || 'N/A'},"${row.student_name}",${new Date(row.timestamp).toLocaleString()}`
+                rows = data.map((row, index) =>
+                    `${index + 1},${row.roll_number || 'N/A'},${row.enrollment_number || 'N/A'},"${row.student_name}",${new Date(row.timestamp).toLocaleString()},Present`
                 ).join('\n');
             } else {
-                // This fixes your "No data" issue. We'll still download a file.
                 rows = "No students attended this lecture.";
             }
 
