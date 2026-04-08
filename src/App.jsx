@@ -24,19 +24,18 @@ export default function App() {
     const [isLoading, setIsLoading] = useState(true);
     const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
     const [lectureNotification, setLectureNotification] = useState(null);
-    const [serverWaking, setServerWaking] = useState(false);
 
     // --- EFFECT HOOKS ---
     useEffect(() => {
         const initializeApp = async () => {
-            // Wake up Render backend immediately (free tier spins down when idle).
-            // This ping starts the warm-up while the user is on the landing page.
-            setServerWaking(true);
-            fetch(`${API_URL}/health`)
-                .then(() => setServerWaking(false))
-                .catch(() => setServerWaking(false));
+            // Wake up Render backend in background (don't block UI)
+            fetch(`${API_URL}/health`).catch(() => {});
 
-            // UPDATED: Use sessionStorage
+            // Keep-alive: Ping backend every 10 minutes as long as app is open
+            const keepAlive = setInterval(() => {
+                fetch(`${API_URL}/health`).catch(() => {});
+            }, 600000); // 10 minutes
+
             const storedToken = sessionStorage.getItem('token');
             const storedUser = JSON.parse(sessionStorage.getItem('user'));
             const urlParams = new URLSearchParams(window.location.search);
@@ -47,17 +46,16 @@ export default function App() {
                 setToken(storedToken);
                 await fetchDataForUser(storedUser, storedToken, lectureIdFromUrl);
             } else if (lectureIdFromUrl) {
-                // UPDATED: Use sessionStorage
                 sessionStorage.setItem('pendingLectureId', lectureIdFromUrl);
                 setView('studentLogin');
                 setIsLoading(false);
             } else {
                 setIsLoading(false);
             }
+
+            return () => clearInterval(keepAlive);
         };
         initializeApp();
-        // THIS IS THE FIX: The dependency array MUST be empty '[]'
-        // This ensures the app initializes only ONCE on page load.
     }, []);
 
     useEffect(() => {
@@ -275,11 +273,6 @@ export default function App() {
 
     return (
         <>
-            {serverWaking && (
-                <div className="w-full bg-amber-500 text-white text-center py-2 text-sm sticky top-0 z-30">
-                    ⏳ Server is starting up, please wait a moment (~30s on first visit)...
-                </div>
-            )}
             <Navbar user={user} setView={setView} onLogout={handleLogout} />
             <div key={view} className="animate-fadeIn">
                 {renderContent()}
