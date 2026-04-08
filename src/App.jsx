@@ -7,9 +7,7 @@ import { StudentDashboard, ScanQRCodePage, ViewSchedulePage } from './pages/Stud
 import { AdminDashboard } from './pages/AdminPages.jsx';
 
 // API URL Configuration
-// Development: http://localhost:3001/api
-// Production: Uses VITE_API_URL from .env.production or falls back to /api
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
+const API_URL = "https://attendence-backend-tfw2.onrender.com/api";
 
 export default function App() {
     // --- STATE MANAGEMENT ---

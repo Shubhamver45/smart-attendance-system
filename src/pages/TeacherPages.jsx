@@ -4,7 +4,7 @@ import { LocationPicker } from '../components/LocationPicker.jsx';
 import { BookOpenIcon, PlusIcon, QrCodeIcon, CalendarIcon, DownloadIcon, BarChartIcon, MapPinIcon } from '../components/Icons.jsx';
 
 // Define the API_URL at the top of the file to be used by all components
-const API_URL = import.meta.env.PROD ? '/api' : 'http://localhost:3001/api';
+const API_URL = "https://attendence-backend-tfw2.onrender.com/api";
 
 // --- Helper function to trigger CSV download ---
 const downloadCSV = (csvContent, fileName) => {
