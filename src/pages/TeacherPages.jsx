@@ -240,9 +240,65 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
         downloadCSV(headers + rows, "monthly_defaulter_report.csv");
     };
 
+    const handleDownloadCumulativeReport = async () => {
+        try {
+            const res = await fetch(`${API_URL}/teacher/reports/cumulative/${teacherId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const { students, lectures, records } = await res.json();
+            
+            if (!lectures || lectures.length === 0) {
+                alert("No lectures found to generate a cumulative report.");
+                return;
+            }
+
+            // Create CSV Headers: Roll No, Name, [Lectures...], Total, Percentage
+            const lectureHeaders = lectures.map(l => `"${l.name}"`).join(',');
+            const headers = `Roll No,Name,Enrollment No,${lectureHeaders},Total,Percentage\n`;
+
+            // Create a lookup for attendance: student_id -> Set of lecture_ids
+            const attendanceLookup = {};
+            records.forEach(rec => {
+                if (!attendanceLookup[rec.student_id]) {
+                    attendanceLookup[rec.student_id] = new Set();
+                }
+                attendanceLookup[rec.student_id].add(rec.lecture_id);
+            });
+
+            // Generate rows for each student
+            const rows = students.map(student => {
+                const attendedSet = attendanceLookup[student.id] || new Set();
+                let attendedCount = 0;
+                
+                const attendanceStatus = lectures.map(lecture => {
+                    const isPresent = attendedSet.has(lecture.id);
+                    if (isPresent) attendedCount++;
+                    return isPresent ? 'P' : 'A';
+                }).join(',');
+
+                const percentage = ((attendedCount / lectures.length) * 100).toFixed(0);
+                return `${student.roll_number || 'N/A'},"${student.name}",${student.enrollment_number || 'N/A'},${attendanceStatus},${attendedCount},${percentage}%`;
+            }).join('\n');
+
+            downloadCSV(headers + rows, `cumulative_attendance_report.csv`);
+        } catch (error) {
+            console.error("Failed to generate cumulative report:", error);
+            alert("Error generating report.");
+        }
+    };
+
     return (
         <main className="p-4 md:p-8">
-            <h1 className="text-2xl md:text-3xl font-bold text-[#021024] mb-6">Monthly Attendance Reports</h1>
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <h1 className="text-2xl md:text-3xl font-bold text-[#021024]">Attendance Master Record</h1>
+                <button 
+                    onClick={handleDownloadCumulativeReport} 
+                    className="w-full md:w-auto bg-blue-600 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:bg-blue-700 transition-all"
+                >
+                    <DownloadIcon className="w-5 h-5" /> Download Master Excel (All Students)
+                </button>
+            </div>
+
             <div className="bg-white/80 p-6 rounded-2xl shadow-lg mb-8">
                 <h3 className="text-xl font-bold mb-4">Generate Monthly Defaulter Report</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
