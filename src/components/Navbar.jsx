@@ -16,7 +16,7 @@ export const Navbar = ({ user, setView, onLogout }) => {
         : user.role === 'teacher'
             ? [
                 { name: 'My Lectures', view: 'teacherHome', icon: <BookOpenIcon className="w-5 h-5" /> },
-                { name: 'Monthly Reports', view: 'reports', icon: <BarChartIcon className="w-5 h-5" /> }
+                { name: 'Master Reports', view: 'reports', icon: <BarChartIcon className="w-5 h-5" /> }
             ]
             : [
                 { name: 'My Attendance', view: 'studentHome', icon: <BookOpenIcon className="w-5 h-5" /> },
