@@ -252,9 +252,9 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
                 return;
             }
 
-            // Create CSV Headers: Roll No, Name, [Lectures...], Total, Percentage
-            const lectureHeaders = lectures.map(l => `"${l.name}"`).join(',');
-            const headers = `Roll No,Name,Enrollment No,${lectureHeaders},Total,Percentage\n`;
+            // Create Headers: Sr. No, Roll No, Enrollment No, Name, [Dates/Subjects], Total, %
+            const dateHeaders = lectures.map(l => `"${new Date(l.date).toLocaleDateString()} (${l.subject})"`).join(',');
+            const headers = `Sr. No,Roll Number,Enrollment Number,Name,${dateHeaders},Total Present,Percentage\n`;
 
             // Create a lookup for attendance: student_id -> Set of lecture_ids
             const attendanceLookup = {};
@@ -266,7 +266,7 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
             });
 
             // Generate rows for each student
-            const rows = students.map(student => {
+            const rows = students.map((student, index) => {
                 const attendedSet = attendanceLookup[student.id] || new Set();
                 let attendedCount = 0;
                 
@@ -276,11 +276,11 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
                     return isPresent ? 'P' : 'A';
                 }).join(',');
 
-                const percentage = ((attendedCount / lectures.length) * 100).toFixed(0);
-                return `${student.roll_number || 'N/A'},"${student.name}",${student.enrollment_number || 'N/A'},${attendanceStatus},${attendedCount},${percentage}%`;
+                const percentage = ((attendedCount / lectures.length) * 100).toFixed(2);
+                return `${index + 1},${student.roll_number || 'N/A'},${student.enrollment_number || 'N/A'},"${student.name}",${attendanceStatus},${attendedCount},${percentage}%`;
             }).join('\n');
 
-            downloadCSV(headers + rows, `cumulative_attendance_report.csv`);
+            downloadCSV(headers + rows, `master_attendance_report.csv`);
         } catch (error) {
             console.error("Failed to generate cumulative report:", error);
             alert("Error generating report.");
