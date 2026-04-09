@@ -151,7 +151,12 @@ export default function App() {
             await fetchDataForUser(data.user, data.token, pendingLectureId);
             if (pendingLectureId) sessionStorage.removeItem('pendingLectureId');
         } catch (error) {
-            alert(`Login Failed: ${error.message}`);
+            console.error("Login error:", error);
+            if (error.message === 'Failed to fetch' || error.message.includes('network')) {
+                alert("Connection Error: Your server is currently WAKING UP from sleep mode. Please wait ~30 seconds and press Sign In again!");
+            } else {
+                alert(`Login Failed: ${error.message}`);
+            }
         }
     };
 
@@ -168,7 +173,12 @@ export default function App() {
             alert('Registration successful! Please log in.');
             setView(formData.role === 'teacher' ? 'teacherLogin' : 'studentLogin');
         } catch (error) {
-            alert(`Registration Failed: ${error.message}`);
+            console.error("Registration error:", error);
+            if (error.message === 'Failed to fetch' || error.message.includes('network')) {
+                alert("Connection Error: Your server is currently WAKING UP from sleep mode. Please wait ~30 seconds and press Create Account again!");
+            } else {
+                alert(`Registration Failed: ${error.message}`);
+            }
         }
     };
 
