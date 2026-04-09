@@ -72,11 +72,13 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
             let rows = "";
 
             if (data.length > 0) {
-                rows = data.map((row, index) =>
-                    `${index + 1},${row.roll_number || 'N/A'},${row.enrollment_number || 'N/A'},"${row.student_name}",${new Date(row.timestamp).toLocaleString()},Present`
-                ).join('\n');
+                rows = data.map((row, index) => {
+                    const status = row.timestamp ? 'Present' : 'Absent';
+                    const time = row.timestamp ? new Date(row.timestamp).toLocaleString() : 'N/A';
+                    return `${index + 1},${row.roll_number || 'N/A'},${row.enrollment_number || 'N/A'},"${row.student_name}",${time},${status}`;
+                }).join('\n');
             } else {
-                rows = "No students attended this lecture.";
+                rows = "No students found in the system.";
             }
 
             downloadCSV(headers + rows, `lecture_${lecture.name.replace(/\s+/g, '_')}_report.csv`);
