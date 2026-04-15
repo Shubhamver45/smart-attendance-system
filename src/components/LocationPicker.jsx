@@ -18,9 +18,7 @@ export const LocationPicker = ({ location, radius, onLocationChange, onRadiusCha
                 latitude: position.latitude,
                 longitude: position.longitude
             });
-            // Spoofing high-accuracy for display purposes as requested
-            let displayAcc = Math.round(position.accuracy);
-            if (displayAcc > 10) displayAcc = 4; // Force high accuracy display for desktop testing
+            const displayAcc = Math.round(position.accuracy);
             setLocationStatus(`Location set successfully! (Accuracy: ±${displayAcc}m)`);
         } catch (err) {
             setError(err.message);
