@@ -188,13 +188,29 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
     );
 };
 
-// --- THIS COMPONENT IS NOW FULLY CORRECTED ---
+// --- UPGRADED REPORTS PAGE ---
 export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents, attendanceRecords }) => {
     const [defaulters, setDefaulters] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    // Month-wise report state
+    const [selectedMonth, setSelectedMonth] = useState(String(new Date().getMonth() + 1));
+    const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
+    const [isDownloadingMonthly, setIsDownloadingMonthly] = useState(false);
+    const [isDownloadingCumulative, setIsDownloadingCumulative] = useState(false);
+
+    const MONTHS = [
+        { value: '1', label: 'January' }, { value: '2', label: 'February' },
+        { value: '3', label: 'March' }, { value: '4', label: 'April' },
+        { value: '5', label: 'May' }, { value: '6', label: 'June' },
+        { value: '7', label: 'July' }, { value: '8', label: 'August' },
+        { value: '9', label: 'September' }, { value: '10', label: 'October' },
+        { value: '11', label: 'November' }, { value: '12', label: 'December' },
+    ];
+
+    const currentYear = new Date().getFullYear();
+    const YEARS = Array.from({ length: 4 }, (_, i) => String(currentYear - i));
 
     useEffect(() => {
-        // This function now calculates defaulters from the props passed by App.jsx
         const calculateDefaulters = () => {
             setIsLoading(true);
             if (!allStudents || allStudents.length === 0 || !lectures || lectures.length === 0) {
@@ -202,122 +218,207 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
                 setDefaulters([]);
                 return;
             }
-
             const totalLectures = lectures.length;
-
             const defaulterList = allStudents.map(student => {
-                // Find all attendance records for this student
                 const studentRecords = attendanceRecords.filter(rec => rec.student_id === student.id);
-
-                // Count how many of this teacher's lectures the student attended
                 const attendedCount = lectures.filter(lecture =>
                     studentRecords.some(rec => rec.lecture_id === lecture.id && rec.status === 'present')
                 ).length;
-
                 const percentage = (attendedCount / totalLectures) * 100;
-
-                return {
-                    ...student,
-                    attended_count: attendedCount,
-                    total_lectures: totalLectures,
-                    percentage: percentage
-                };
+                return { ...student, attended_count: attendedCount, total_lectures: totalLectures, percentage };
             }).filter(student => student.percentage < 75);
-
             setDefaulters(defaulterList);
             setIsLoading(false);
         };
-
-        // We no longer fetch, we just calculate.
         calculateDefaulters();
-    }, [lectures, allStudents, attendanceRecords]); // Depend on the data from App.jsx
+    }, [lectures, allStudents, attendanceRecords]);
 
-    const handleDownloadCSV = () => {
-        const headers = "Student ID,Name,Roll Number,Enrollment Number,Attendance Percentage\n";
-        let rows = "";
-
-        if (defaulters.length === 0) {
-            rows = "No defaulters found for this period.";
-        } else {
-            rows = defaulters.map(d =>
-                `${d.id},"${d.name}",${d.roll_number || 'N/A'},${d.enrollment_number || 'N/A'},${d.percentage.toFixed(0)}%`
-            ).join('\n');
+    // Shared helper: build CSV from report data
+    const buildReportCSV = (students, lectures, records, reportLabel) => {
+        if (!lectures || lectures.length === 0) {
+            return null;
         }
-        downloadCSV(headers + rows, "monthly_defaulter_report.csv");
+        const attendanceLookup = {};
+        records.forEach(rec => {
+            if (!attendanceLookup[rec.student_id]) attendanceLookup[rec.student_id] = new Set();
+            attendanceLookup[rec.student_id].add(rec.lecture_id);
+        });
+
+        // Header row with dates and subject names
+        const dateHeaders = lectures.map(l => {
+            const d = new Date(l.date);
+            const dateStr = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+            return `"${dateStr}\\n${l.subject}"`;
+        }).join(',');
+        const headerRow = `Sr. No,Roll Number,Enrollment Number,Name,${dateHeaders},Total Present,Total Lectures,Percentage\n`;
+
+        const rows = students.map((student, index) => {
+            const attendedSet = attendanceLookup[student.id] || new Set();
+            let attendedCount = 0;
+            const statusCells = lectures.map(lecture => {
+                const isPresent = attendedSet.has(lecture.id);
+                if (isPresent) attendedCount++;
+                return isPresent ? 'P' : 'A';
+            }).join(',');
+            const pct = lectures.length > 0 ? ((attendedCount / lectures.length) * 100).toFixed(2) : '0.00';
+            return `${index + 1},${student.roll_number || 'N/A'},${student.enrollment_number || 'N/A'},"${student.name}",${statusCells},${attendedCount},${lectures.length},${pct}%`;
+        }).join('\n');
+
+        return headerRow + rows;
     };
 
+    // Download ALL TIME cumulative report
     const handleDownloadCumulativeReport = async () => {
+        setIsDownloadingCumulative(true);
         try {
             const res = await fetch(`${API_URL}/teacher/reports/cumulative/${teacherId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const { students, lectures, records } = await res.json();
-            
             if (!lectures || lectures.length === 0) {
-                alert("No lectures found to generate a cumulative report.");
+                alert('No lecture data found in the database. Create a lecture first.');
                 return;
             }
-
-            // Create Headers: Sr. No, Roll No, Enrollment No, Name, [Dates/Subjects], Total, %
-            const dateHeaders = lectures.map(l => `"${new Date(l.date).toLocaleDateString()} (${l.subject})"`).join(',');
-            const headers = `Sr. No,Roll Number,Enrollment Number,Name,${dateHeaders},Total Present,Percentage\n`;
-
-            // Create a lookup for attendance: student_id -> Set of lecture_ids
-            const attendanceLookup = {};
-            records.forEach(rec => {
-                if (!attendanceLookup[rec.student_id]) {
-                    attendanceLookup[rec.student_id] = new Set();
-                }
-                attendanceLookup[rec.student_id].add(rec.lecture_id);
-            });
-
-            // Generate rows for each student
-            const rows = students.map((student, index) => {
-                const attendedSet = attendanceLookup[student.id] || new Set();
-                let attendedCount = 0;
-                
-                const attendanceStatus = lectures.map(lecture => {
-                    const isPresent = attendedSet.has(lecture.id);
-                    if (isPresent) attendedCount++;
-                    return isPresent ? 'P' : 'A';
-                }).join(',');
-
-                const percentage = ((attendedCount / lectures.length) * 100).toFixed(2);
-                return `${index + 1},${student.roll_number || 'N/A'},${student.enrollment_number || 'N/A'},"${student.name}",${attendanceStatus},${attendedCount},${percentage}%`;
-            }).join('\n');
-
-            downloadCSV(headers + rows, `master_attendance_report.csv`);
+            const csv = buildReportCSV(students, lectures, records, 'All Time');
+            if (csv) downloadCSV(csv, `master_attendance_ALL_TIME.csv`);
         } catch (error) {
-            console.error("Failed to generate cumulative report:", error);
-            alert("Error generating report.");
+            console.error('Failed to generate cumulative report:', error);
+            alert('Error generating report. Please try again.');
+        } finally {
+            setIsDownloadingCumulative(false);
+        }
+    };
+
+    // Download MONTH-WISE report
+    const handleDownloadMonthlyReport = async () => {
+        setIsDownloadingMonthly(true);
+        try {
+            const monthName = MONTHS.find(m => m.value === selectedMonth)?.label || selectedMonth;
+            const res = await fetch(
+                `${API_URL}/teacher/reports/monthly/${teacherId}?month=${selectedMonth}&year=${selectedYear}`,
+                { headers: { 'Authorization': `Bearer ${token}` } }
+            );
+            const { students, lectures, records } = await res.json();
+            if (!lectures || lectures.length === 0) {
+                alert(`No lectures found for ${monthName} ${selectedYear}. Try a different month/year.`);
+                return;
+            }
+            const csv = buildReportCSV(students, lectures, records, `${monthName} ${selectedYear}`);
+            if (csv) downloadCSV(csv, `attendance_${monthName}_${selectedYear}.csv`);
+        } catch (error) {
+            console.error('Failed to generate monthly report:', error);
+            alert('Error generating report. Please try again.');
+        } finally {
+            setIsDownloadingMonthly(false);
         }
     };
 
     return (
         <main className="p-4 md:p-8">
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <h1 className="text-2xl md:text-3xl font-bold text-[#021024]">Attendance Master Record</h1>
-                <button 
-                    onClick={handleDownloadCumulativeReport} 
-                    className="w-full md:w-auto bg-blue-600 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:bg-blue-700 transition-all"
-                >
-                    <DownloadIcon className="w-5 h-5" /> Download Master Excel (All Students)
-                </button>
-            </div>
-
-            <div className="bg-white/80 p-6 rounded-2xl shadow-lg mb-8">
-                <h3 className="text-xl font-bold mb-4">Generate Monthly Defaulter Report</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                    <div><label className="text-sm font-medium text-slate-700 block mb-2">Month</label><select className="w-full p-2.5 border border-slate-300 rounded-lg"><option>All Months</option></select></div>
-                    <div><label className="text-sm font-medium text-slate-700 block mb-2">Year</label><input type="number" defaultValue={new Date().getFullYear()} className="w-full p-2.5 border border-slate-300 rounded-lg" /></div>
-                    <button onClick={handleDownloadCSV} className="bg-[#052659] text-white font-bold py-2.5 px-6 rounded-lg flex items-center justify-center gap-2"><DownloadIcon /> Download Defaulters</button>
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-bold text-[#021024]">Attendance Master Register</h1>
+                    <p className="text-slate-500 text-sm mt-1">All data is permanently stored — reports are generated from full database history.</p>
                 </div>
             </div>
+
+            {/* ── CARD 1: All-Time Master Excel ── */}
+            <div className="bg-white/90 border-2 border-blue-200 p-6 rounded-2xl shadow-lg mb-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                        <div className="bg-blue-100 p-3 rounded-xl">
+                            <DownloadIcon className="w-7 h-7 text-blue-700" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-[#021024]">📊 Cumulative Master Register (All Time)</h2>
+                            <p className="text-slate-500 text-sm mt-1">
+                                Complete attendance sheet from <strong>Day 1</strong> with all students, all dates, P/A per lecture, totals &amp; percentages.
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleDownloadCumulativeReport}
+                        disabled={isDownloadingCumulative}
+                        className="w-full md:w-auto bg-blue-600 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 shadow hover:bg-blue-700 transition-all disabled:opacity-60 disabled:cursor-wait"
+                    >
+                        {isDownloadingCumulative ? '⏳ Generating...' : <><DownloadIcon className="w-5 h-5" /> Download All-Time Excel</>}
+                    </button>
+                </div>
+            </div>
+
+            {/* ── CARD 2: Month-wise Excel ── */}
+            <div className="bg-white/90 border-2 border-green-200 p-6 rounded-2xl shadow-lg mb-8">
+                <div className="flex items-start gap-4 mb-5">
+                    <div className="bg-green-100 p-3 rounded-xl">
+                        <CalendarIcon className="w-7 h-7 text-green-700" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-[#021024]">📅 Month-Wise Attendance Register</h2>
+                        <p className="text-slate-500 text-sm mt-1">
+                            Select a month &amp; year to download that month's attendance register with P/A for each class.
+                        </p>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                    <div>
+                        <label className="text-sm font-semibold text-slate-700 block mb-2">Month</label>
+                        <select
+                            value={selectedMonth}
+                            onChange={e => setSelectedMonth(e.target.value)}
+                            className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-400"
+                        >
+                            {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="text-sm font-semibold text-slate-700 block mb-2">Year</label>
+                        <select
+                            value={selectedYear}
+                            onChange={e => setSelectedYear(e.target.value)}
+                            className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-400"
+                        >
+                            {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                    </div>
+                    <button
+                        onClick={handleDownloadMonthlyReport}
+                        disabled={isDownloadingMonthly}
+                        className="w-full bg-green-600 text-white font-bold py-2.5 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-green-700 transition-all disabled:opacity-60 disabled:cursor-wait"
+                    >
+                        {isDownloadingMonthly ? '⏳ Generating...' : <><DownloadIcon className="w-5 h-5" /> Download Month Excel</>}
+                    </button>
+                </div>
+            </div>
+
+            {/* ── CARD 3: Defaulter List ── */}
             <div className="bg-white/80 p-6 rounded-2xl shadow-lg mb-8">
-                <h3 className="text-xl font-bold mb-4">Defaulter Students (Attendance &lt; 75%)</h3>
-                {isLoading ? <p className="text-center p-4">Loading report...</p> : (defaulters.length > 0 ? (
-                    <div className="overflow-x-auto"><table className="w-full text-left min-w-[600px]"><thead className="border-b-2"><tr><th className="p-3">ID</th><th className="p-3">Name</th><th className="p-3">Roll No.</th><th className="p-3">Enroll. No.</th><th className="p-3">Attendance %</th><th className="p-3">Action</th></tr></thead><tbody>{defaulters.map(student => (<tr key={student.id} className="border-b hover:bg-slate-50"><td className="p-3">{student.id}</td><td className="p-3">{student.name}</td><td className="p-3">{student.roll_number || 'N/A'}</td><td className="p-3">{student.enrollment_number || 'N/A'}</td><td className="p-3 font-bold text-red-600">{student.percentage.toFixed(0)}%</td><td className="p-3"><button onClick={() => alert(`Simulating: Email sent to mentor of ${student.name}`)} className="text-sm bg-red-100 text-red-700 font-semibold py-1 px-3 rounded-full hover:bg-red-200">Notify Mentor</button></td></tr>))}</tbody></table></div>
-                ) : (<p className="text-slate-500 text-center py-4">No defaulters found.</p>))}
+                <h3 className="text-xl font-bold mb-4">⚠️ Defaulter Students (Attendance &lt; 75%)</h3>
+                {isLoading ? <p className="text-center p-4">Calculating...</p> : (defaulters.length > 0 ? (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left min-w-[600px]">
+                            <thead className="bg-red-50 border-b-2 border-red-200">
+                                <tr>
+                                    <th className="p-3">Name</th>
+                                    <th className="p-3">Roll No.</th>
+                                    <th className="p-3">Enrollment No.</th>
+                                    <th className="p-3">Attended</th>
+                                    <th className="p-3">Attendance %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {defaulters.map(student => (
+                                    <tr key={student.id} className="border-b hover:bg-slate-50">
+                                        <td className="p-3 font-semibold">{student.name}</td>
+                                        <td className="p-3">{student.roll_number || 'N/A'}</td>
+                                        <td className="p-3">{student.enrollment_number || 'N/A'}</td>
+                                        <td className="p-3">{student.attended_count}/{student.total_lectures}</td>
+                                        <td className="p-3 font-bold text-red-600">{student.percentage.toFixed(0)}%</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : <p className="text-slate-500 text-center py-8">🎉 No defaulters found! All students have attendance above 75%.</p>)}
             </div>
         </main>
     );
