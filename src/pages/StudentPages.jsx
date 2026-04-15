@@ -359,8 +359,8 @@ export const StudentProfilePage = ({ setView, user, token }) => {
                         {isEditing ? (
                             <form onSubmit={handleSave} className="space-y-4">
                                 <div>
-                                    <label className="text-sm font-semibold text-slate-700 block mb-1">Subject Teacher Email</label>
-                                    <input type="email" value={formData.subject_teacher_email} onChange={e => setFormData({...formData, subject_teacher_email: e.target.value})} className="w-full p-2 border border-slate-300 rounded-lg" placeholder="Teacher's Email" />
+                                    <label className="text-sm font-semibold text-slate-700 block mb-1">Class Teacher Email</label>
+                                    <input type="email" value={formData.subject_teacher_email} onChange={e => setFormData({...formData, subject_teacher_email: e.target.value})} className="w-full p-2 border border-slate-300 rounded-lg" placeholder="Class Teacher's Email" />
                                 </div>
                                 <div>
                                     <label className="text-sm font-semibold text-slate-700 block mb-1">Parents Email</label>
@@ -378,7 +378,7 @@ export const StudentProfilePage = ({ setView, user, token }) => {
                         ) : (
                             <div className="grid grid-cols-1 gap-4">
                                 <div className="bg-white border border-slate-200 p-3 rounded-lg flex items-center justify-between">
-                                    <span className="font-semibold text-slate-600">Subject Teacher</span>
+                                    <span className="font-semibold text-slate-600">Class Teacher</span>
                                     <span className={`font-bold ${profile.subject_teacher_email ? 'text-black' : 'text-red-500'}`}>{profile.subject_teacher_email || 'Not provided'}</span>
                                 </div>
                                 <div className="bg-white border border-slate-200 p-3 rounded-lg flex items-center justify-between">

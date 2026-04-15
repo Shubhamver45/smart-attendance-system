@@ -135,7 +135,7 @@ export const StudentRegisterPage = ({ setView, onRegister }) => {
                     <div className="border-t border-slate-200 pt-4 mt-4">
                         <p className="text-sm text-slate-500 font-semibold mb-3">Emergency & Academic Contacts</p>
                         <div className="space-y-4">
-                            <InputField id="subject_teacher_email" label="Subject Teacher Email" type="email" placeholder="Teacher's email" icon={<MailIcon className="w-5 h-5 text-slate-400" />} value={formData.subject_teacher_email} onChange={handleChange} />
+                            <InputField id="subject_teacher_email" label="Class Teacher Email" type="email" placeholder="Class Teacher's email" icon={<MailIcon className="w-5 h-5 text-slate-400" />} value={formData.subject_teacher_email} onChange={handleChange} />
                             <InputField id="parents_email" label="Parents Email" type="email" placeholder="Parents email address" icon={<MailIcon className="w-5 h-5 text-slate-400" />} value={formData.parents_email} onChange={handleChange} />
                             <InputField id="mentor_email" label="Mentor Email" type="email" placeholder="Your mentor's email" icon={<MailIcon className="w-5 h-5 text-slate-400" />} value={formData.mentor_email} onChange={handleChange} />
                         </div>
