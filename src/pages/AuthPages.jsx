@@ -113,7 +113,7 @@ export const StudentLoginPage = ({ setView, onLogin }) => {
 };
 
 export const StudentRegisterPage = ({ setView, onRegister }) => {
-    const [formData, setFormData] = useState({ id: '', name: '', email: '', password: '', role: 'student', roll_number: '', enrollment_number: '' });
+    const [formData, setFormData] = useState({ id: '', name: '', email: '', password: '', role: 'student', roll_number: '', enrollment_number: '', subject_teacher_email: '', parents_email: '', mentor_email: '' });
     const handleChange = (e) => setFormData({ ...formData, [e.target.id]: e.target.value });
 
     const handleSubmit = (e) => {
@@ -129,8 +129,17 @@ export const StudentRegisterPage = ({ setView, onRegister }) => {
                     <InputField id="roll_number" label="Roll Number" type="text" placeholder="Enter your roll number" icon={<UserIcon className="w-5 h-5" />} value={formData.roll_number} onChange={handleChange} />
                     <InputField id="enrollment_number" label="Enrollment Number" type="text" placeholder="Enter your enrollment number" icon={<UserIcon className="w-5 h-5" />} value={formData.enrollment_number} onChange={handleChange} />
                     <InputField id="id" label="Student ID" type="text" placeholder="e.g., mit263" icon={<UserIcon className="w-5 h-5" />} value={formData.id} onChange={handleChange} />
-                    <InputField id="email" label="Email" type="email" placeholder="Enter your email" icon={<MailIcon className="w-5 h-5" />} value={formData.email} onChange={handleChange} />
+                    <InputField id="email" label="Student Email" type="email" placeholder="Enter your email" icon={<MailIcon className="w-5 h-5" />} value={formData.email} onChange={handleChange} />
                     <InputField id="password" label="Password" type="password" placeholder="Create a password" icon={<LockIcon className="w-5 h-5" />} value={formData.password} onChange={handleChange} />
+                    
+                    <div className="border-t border-slate-200 pt-4 mt-4">
+                        <p className="text-sm text-slate-500 font-semibold mb-3">Emergency & Academic Contacts</p>
+                        <div className="space-y-4">
+                            <InputField id="subject_teacher_email" label="Subject Teacher Email" type="email" placeholder="Teacher's email" icon={<MailIcon className="w-5 h-5 text-slate-400" />} value={formData.subject_teacher_email} onChange={handleChange} />
+                            <InputField id="parents_email" label="Parents Email" type="email" placeholder="Parents email address" icon={<MailIcon className="w-5 h-5 text-slate-400" />} value={formData.parents_email} onChange={handleChange} />
+                            <InputField id="mentor_email" label="Mentor Email" type="email" placeholder="Your mentor's email" icon={<MailIcon className="w-5 h-5 text-slate-400" />} value={formData.mentor_email} onChange={handleChange} />
+                        </div>
+                    </div>
                     <button type="submit" className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors">Create Account</button>
                 </form>
                 <p className="text-center text-slate-600 mt-6">Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); setView('studentLogin') }} className="font-semibold text-[#052659] hover:underline">Sign in here</a></p>

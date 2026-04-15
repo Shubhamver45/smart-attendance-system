@@ -3,7 +3,7 @@ import { Navbar } from './components/Navbar.jsx';
 import { LandingPage } from './pages/LandingPage.jsx';
 import { TeacherLoginPage, TeacherRegisterPage, StudentLoginPage, StudentRegisterPage, AdminLoginPage } from './pages/AuthPages.jsx';
 import { TeacherDashboard, AttendanceReportsPage, CreateLecturePage } from './pages/TeacherPages.jsx';
-import { StudentDashboard, ScanQRCodePage, ViewSchedulePage } from './pages/StudentPages.jsx';
+import { StudentDashboard, ScanQRCodePage, ViewSchedulePage, StudentProfilePage } from './pages/StudentPages.jsx';
 import { AdminDashboard } from './pages/AdminPages.jsx';
 
 // API URL Configuration
@@ -261,6 +261,7 @@ export default function App() {
                 case 'studentHome': return <StudentDashboard user={user} setView={setView} lectures={lectures} attendanceRecords={attendanceRecords} lectureNotification={lectureNotification} onAttendNow={handleAttendFromNotification} />;
                 case 'scanQRCode': return <ScanQRCodePage setView={setView} markAttendance={markAttendance} lectures={lectures} token={token} />;
                 case 'viewSchedule': return <ViewSchedulePage setView={setView} lectures={lectures} />;
+                case 'studentProfile': return <StudentProfilePage setView={setView} user={user} token={token} />;
 
                 default:
                     if (user.role === 'admin') { setView('adminHome'); }

@@ -1,6 +1,6 @@
 import React from 'react';
 // CORRECTED: Added .jsx extension
-import { BookOpenIcon, LogOutIcon, BarChartIcon, CalendarDaysIcon, QrCodeIcon, ShieldIcon, UsersIcon, ActivityIcon } from './Icons.jsx';
+import { BookOpenIcon, LogOutIcon, BarChartIcon, CalendarDaysIcon, QrCodeIcon, ShieldIcon, UsersIcon, ActivityIcon, UserIcon } from './Icons.jsx';
 
 export const Navbar = ({ user, setView, onLogout }) => {
     if (!user) return null;
@@ -21,6 +21,7 @@ export const Navbar = ({ user, setView, onLogout }) => {
             : [
                 { name: 'My Attendance', view: 'studentHome', icon: <BookOpenIcon className="w-5 h-5" /> },
                 { name: 'Schedule', view: 'viewSchedule', icon: <CalendarDaysIcon className="w-5 h-5" /> },
+                { name: 'Profile', view: 'studentProfile', icon: <UserIcon className="w-5 h-5" /> },
                 // THIS IS THE NEW BUTTON FOR STUDENTS
                 { name: 'Scan QR', view: 'scanQRCode', icon: <QrCodeIcon className="w-5 h-5" />, isPrimary: true }
             ];

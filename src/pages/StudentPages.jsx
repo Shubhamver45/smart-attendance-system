@@ -254,3 +254,150 @@ export const ViewSchedulePage = ({ lectures, setView }) => (
         </div>
     </main>
 );
+
+export const StudentProfilePage = ({ setView, user, token }) => {
+    const [profile, setProfile] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [formData, setFormData] = useState({
+        subject_teacher_email: '',
+        parents_email: '',
+        mentor_email: ''
+    });
+    const [statusMessage, setStatusMessage] = useState('');
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const res = await fetch(`${API_URL}/student/profile/${user.id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setProfile(data);
+                    setFormData({
+                        subject_teacher_email: data.subject_teacher_email || '',
+                        parents_email: data.parents_email || '',
+                        mentor_email: data.mentor_email || ''
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to fetch profile", error);
+            }
+        };
+        fetchProfile();
+    }, [user.id, token]);
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        setStatusMessage('Saving...');
+        try {
+            const res = await fetch(`${API_URL}/student/profile/${user.id}`, {
+                method: 'PUT',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify(formData)
+            });
+            if (res.ok) {
+                setStatusMessage('Profile updated successfully!');
+                setIsEditing(false);
+                setProfile({ ...profile, ...formData });
+            } else {
+                setStatusMessage('Failed to update profile.');
+            }
+        } catch (error) {
+            setStatusMessage('Error updating profile.');
+            console.error(error);
+        }
+        setTimeout(() => setStatusMessage(''), 3000);
+    };
+
+    if (!profile) return <main className="p-8 text-center">Loading profile...</main>;
+
+    return (
+        <main className="p-4 md:p-8 flex flex-col items-center">
+            <div className="w-full max-w-2xl bg-white/80 p-8 rounded-2xl shadow-lg">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-3xl font-bold text-[#052659]">My Profile</h2>
+                    {!isEditing && (
+                        <button onClick={() => setIsEditing(true)} className="bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded-lg hover:bg-blue-200">
+                            Edit Contacts
+                        </button>
+                    )}
+                </div>
+
+                {statusMessage && (
+                    <div className={`p-3 rounded-lg mb-6 text-center font-semibold ${statusMessage.includes('success') ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}`}>
+                        {statusMessage}
+                    </div>
+                )}
+
+                <div className="space-y-6">
+                    {/* Read-only primary info */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div>
+                            <p className="text-sm font-semibold text-slate-500">Full Name</p>
+                            <p className="text-lg font-bold">{profile.name}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-slate-500">Student ID</p>
+                            <p className="text-lg font-bold">{profile.id}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-slate-500">Roll/Enrollment No.</p>
+                            <p className="font-semibold">{profile.roll_number} / {profile.enrollment_number}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-slate-500">Primary Email</p>
+                            <p className="font-semibold">{profile.email}</p>
+                        </div>
+                    </div>
+
+                    <div className="border-t border-slate-200 pt-6">
+                        <h3 className="text-xl font-bold mb-4">Emergency & Academic Contacts</h3>
+                        {isEditing ? (
+                            <form onSubmit={handleSave} className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-semibold text-slate-700 block mb-1">Subject Teacher Email</label>
+                                    <input type="email" value={formData.subject_teacher_email} onChange={e => setFormData({...formData, subject_teacher_email: e.target.value})} className="w-full p-2 border border-slate-300 rounded-lg" placeholder="Teacher's Email" />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-semibold text-slate-700 block mb-1">Parents Email</label>
+                                    <input type="email" value={formData.parents_email} onChange={e => setFormData({...formData, parents_email: e.target.value})} className="w-full p-2 border border-slate-300 rounded-lg" placeholder="Parent's Email" />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-semibold text-slate-700 block mb-1">Mentor Email</label>
+                                    <input type="email" value={formData.mentor_email} onChange={e => setFormData({...formData, mentor_email: e.target.value})} className="w-full p-2 border border-slate-300 rounded-lg" placeholder="Mentor's Email" />
+                                </div>
+                                <div className="flex gap-4 pt-2">
+                                    <button type="submit" className="flex-1 bg-green-600 text-white font-bold py-2 rounded-lg hover:bg-green-700">Save Changes</button>
+                                    <button type="button" onClick={() => setIsEditing(false)} className="flex-1 bg-slate-200 text-slate-700 font-bold py-2 rounded-lg hover:bg-slate-300">Cancel</button>
+                                </div>
+                            </form>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-4">
+                                <div className="bg-white border border-slate-200 p-3 rounded-lg flex items-center justify-between">
+                                    <span className="font-semibold text-slate-600">Subject Teacher</span>
+                                    <span className={`font-bold ${profile.subject_teacher_email ? 'text-black' : 'text-red-500'}`}>{profile.subject_teacher_email || 'Not provided'}</span>
+                                </div>
+                                <div className="bg-white border border-slate-200 p-3 rounded-lg flex items-center justify-between">
+                                    <span className="font-semibold text-slate-600">Parents</span>
+                                    <span className={`font-bold ${profile.parents_email ? 'text-black' : 'text-red-500'}`}>{profile.parents_email || 'Not provided'}</span>
+                                </div>
+                                <div className="bg-white border border-slate-200 p-3 rounded-lg flex items-center justify-between">
+                                    <span className="font-semibold text-slate-600">Mentor</span>
+                                    <span className={`font-bold ${profile.mentor_email ? 'text-black' : 'text-red-500'}`}>{profile.mentor_email || 'Not provided'}</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <button onClick={() => setView('studentHome')} className="mt-8 text-[#052659] hover:underline flex items-center gap-2">
+                    &larr; Back to Dashboard
+                </button>
+            </div>
+        </main>
+    );
+};
