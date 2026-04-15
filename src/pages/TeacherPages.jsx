@@ -448,12 +448,19 @@ export const CreateLecturePage = ({ setView, addLecture, setActiveLecture }) => 
                 return;
             }
 
-            // Include location and radius in lecture data
+            // IMPORTANT: Laptops have poor GPS accuracy (e.g. ±86m error). 
+            // If the teacher asks for a 50m radius, but the laptop drops the anchor 86m away from her true location, 
+            // students sitting next to her will be 86m away from the anchor and fail attendance.
+            // SOLUTION: We dynamically expand the 'safe radius' to include the laptop's physical inaccuracy margin.
+            const laptopErrorMargin = Math.round(location.accuracy || 0);
+            const safeRadius = radius + laptopErrorMargin;
+
+            // Include location and expanded radius in lecture data
             const lectureDataWithLocation = {
                 ...lectureDetails,
                 latitude: location.latitude,
                 longitude: location.longitude,
-                radius: radius
+                radius: safeRadius
             };
 
             const newLectureData = await addLecture(lectureDataWithLocation); // This function is passed from App.jsx

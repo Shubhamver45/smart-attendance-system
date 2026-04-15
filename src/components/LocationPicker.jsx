@@ -16,7 +16,8 @@ export const LocationPicker = ({ location, radius, onLocationChange, onRadiusCha
             const position = await getCurrentLocation();
             onLocationChange({
                 latitude: position.latitude,
-                longitude: position.longitude
+                longitude: position.longitude,
+                accuracy: position.accuracy
             });
             const displayAcc = Math.round(position.accuracy);
             setLocationStatus(`Location set successfully! (Accuracy: ±${displayAcc}m)`);
@@ -65,7 +66,7 @@ export const LocationPicker = ({ location, radius, onLocationChange, onRadiusCha
                 {isLoading ? (
                     <>
                         <span className="animate-spin">⟳</span>
-                        Getting Location...
+                        Calibrating High-Accuracy GPS (up to 6s)...
                     </>
                 ) : (
                     <>

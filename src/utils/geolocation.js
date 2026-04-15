@@ -27,8 +27,10 @@ export const calculateDistance = (lat1, lon1, lat2, lon2) => {
 };
 
 /**
- * Get current GPS location of the user
- * @returns {Promise<{latitude: number, longitude: number}>}
+ * Get current GPS location of the user using an advanced multi-sampling technique.
+ * Laptops have poor accuracy, so this watches the position for a few seconds
+ * and returns the reading with the absolute best accuracy.
+ * @returns {Promise<{latitude: number, longitude: number, accuracy: number}>}
  */
 export const getCurrentLocation = () => {
     return new Promise((resolve, reject) => {
@@ -37,28 +39,58 @@ export const getCurrentLocation = () => {
             return;
         }
 
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
+        let bestPosition = null;
+        let watchId = null;
+        let timeoutId = null;
+
+        // Function to finalize and return the best location we found
+        const finish = () => {
+            if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+            if (timeoutId !== null) clearTimeout(timeoutId);
+            
+            if (bestPosition) {
                 resolve({
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    accuracy: position.coords.accuracy
+                    latitude: bestPosition.coords.latitude,
+                    longitude: bestPosition.coords.longitude,
+                    accuracy: bestPosition.coords.accuracy
                 });
+            } else {
+                reject(new Error("Unable to retrieve an accurate location in time."));
+            }
+        };
+
+        // Watch the position continuously
+        watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                // If this is the first reading, or the accuracy is better (lower number = better)
+                if (!bestPosition || position.coords.accuracy < bestPosition.coords.accuracy) {
+                    bestPosition = position;
+                }
+                
+                // If we get an amazing accuracy (like a phone's GPS), exit early!
+                if (bestPosition.coords.accuracy <= 15) {
+                    finish();
+                }
             },
             (error) => {
-                let errorMessage = 'Unable to retrieve your location';
-                switch (error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMessage = 'Location permission denied. Please enable location access.';
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMessage = 'Location information is unavailable.';
-                        break;
-                    case error.TIMEOUT:
-                        errorMessage = 'Location request timed out.';
-                        break;
+                // Only throw error if we haven't found *any* position yet
+                if (!bestPosition) {
+                    let errorMessage = 'Unable to retrieve your location';
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = 'Location permission denied. Please enable location access.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = 'Location information is unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = 'Location request timed out.';
+                            break;
+                    }
+                    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+                    if (timeoutId !== null) clearTimeout(timeoutId);
+                    reject(new Error(errorMessage));
                 }
-                reject(new Error(errorMessage));
             },
             {
                 enableHighAccuracy: true,
@@ -66,6 +98,11 @@ export const getCurrentLocation = () => {
                 maximumAge: 0
             }
         );
+
+        // Run the calibration for 6 seconds to give Wi-Fi scanning time to lock on
+        timeoutId = setTimeout(() => {
+            finish();
+        }, 6000);
     });
 };
 
