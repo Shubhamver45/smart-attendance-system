@@ -211,27 +211,24 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
     const YEARS = Array.from({ length: 4 }, (_, i) => String(currentYear - i));
 
     useEffect(() => {
-        const calculateDefaulters = () => {
+        const fetchDefaulters = async () => {
             setIsLoading(true);
-            if (!allStudents || allStudents.length === 0 || !lectures || lectures.length === 0) {
+            try {
+                const res = await fetch(`${API_URL}/teacher/reports/defaulters/${teacherId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setDefaulters(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch defaulters:", error);
+            } finally {
                 setIsLoading(false);
-                setDefaulters([]);
-                return;
             }
-            const totalLectures = lectures.length;
-            const defaulterList = allStudents.map(student => {
-                const studentRecords = attendanceRecords.filter(rec => rec.student_id === student.id);
-                const attendedCount = lectures.filter(lecture =>
-                    studentRecords.some(rec => rec.lecture_id === lecture.id && rec.status === 'present')
-                ).length;
-                const percentage = (attendedCount / totalLectures) * 100;
-                return { ...student, attended_count: attendedCount, total_lectures: totalLectures, percentage };
-            }).filter(student => student.percentage < 75);
-            setDefaulters(defaulterList);
-            setIsLoading(false);
         };
-        calculateDefaulters();
-    }, [lectures, allStudents, attendanceRecords]);
+        fetchDefaulters();
+    }, [teacherId, token]);
 
     // Shared helper: build CSV from report data
     const buildReportCSV = (students, lectures, records, reportLabel) => {
