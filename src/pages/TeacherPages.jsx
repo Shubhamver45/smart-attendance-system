@@ -413,7 +413,19 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
 
             {/* ── CARD 3: Defaulter List & Alerts ── */}
             <div className="bg-white/80 p-6 rounded-2xl shadow-lg mb-8">
-                <h3 className="text-xl font-bold mb-4">⚠️ Defaulter Students (Attendance &lt; 75%)</h3>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <div>
+                        <h3 className="text-xl font-bold">⚠️ Defaulter Students (Attendance &lt; 75%)</h3>
+                        <p className="text-slate-500 text-sm">Calculated across full history (active + archived).</p>
+                    </div>
+                    <button 
+                        onClick={handleSendAlerts}
+                        disabled={isSendingAlerts || defaulters.length === 0}
+                        className="bg-red-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-700 transition-all flex items-center gap-2 shadow-lg disabled:opacity-50"
+                    >
+                        {isSendingAlerts ? '⏳ Sending Emails...' : <><MailIcon className="w-5 h-5" /> Send Monthly Alerts</>}
+                    </button>
+                </div>
                 {isLoading ? <p className="text-center p-4">Calculating...</p> : (defaulters.length > 0 ? (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left min-w-[600px]">
