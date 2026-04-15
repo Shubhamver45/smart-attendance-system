@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { InputField } from '../components/InputField.jsx';
 import { LocationPicker } from '../components/LocationPicker.jsx';
-import { BookOpenIcon, PlusIcon, QrCodeIcon, CalendarIcon, DownloadIcon, BarChartIcon, MapPinIcon } from '../components/Icons.jsx';
+import { BookOpenIcon, PlusIcon, QrCodeIcon, CalendarIcon, DownloadIcon, BarChartIcon, MapPinIcon, MailIcon } from '../components/Icons.jsx';
 
 // Define the API_URL at the top of the file to be used by all components
 const API_URL = "https://attendence-backend-tfw2.onrender.com/api";
@@ -196,6 +196,30 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
     const [selectedMonth, setSelectedMonth] = useState(String(new Date().getMonth() + 1));
     const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
     const [isDownloadingMonthly, setIsDownloadingMonthly] = useState(false);
+    const [isSendingAlerts, setIsSendingAlerts] = useState(false);
+
+    const handleSendAlerts = async () => {
+        if (!window.confirm('This will send deficiency emails to the Parents, Mentors, and Class Teachers of all defaulters listed below. Continue?')) return;
+        
+        setIsSendingAlerts(true);
+        try {
+            const res = await fetch(`${API_URL}/teacher/reports/send-alerts/${teacherId}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert(data.message || 'Alerts sent successfully!');
+            } else {
+                alert(`Failed to send alerts: ${data.error}`);
+            }
+        } catch (error) {
+            console.error('Error sending alerts:', error);
+            alert('Error connecting to the alert system.');
+        } finally {
+            setIsSendingAlerts(false);
+        }
+    };
     const [isDownloadingCumulative, setIsDownloadingCumulative] = useState(false);
 
     const MONTHS = [
@@ -387,7 +411,7 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
                 </div>
             </div>
 
-            {/* ── CARD 3: Defaulter List ── */}
+            {/* ── CARD 3: Defaulter List & Alerts ── */}
             <div className="bg-white/80 p-6 rounded-2xl shadow-lg mb-8">
                 <h3 className="text-xl font-bold mb-4">⚠️ Defaulter Students (Attendance &lt; 75%)</h3>
                 {isLoading ? <p className="text-center p-4">Calculating...</p> : (defaulters.length > 0 ? (
