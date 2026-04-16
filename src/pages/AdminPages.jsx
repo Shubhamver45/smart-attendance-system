@@ -359,6 +359,16 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
         }]
     };
 
+    const roleData = {
+        labels: ['Teachers', 'Students'],
+        datasets: [{
+            data: [data.stats.total_teachers || 0, data.stats.total_students || 0],
+            backgroundColor: ['#052659', '#5483B3'],
+            hoverOffset: 4,
+            borderWidth: 0
+        }]
+    };
+
     // ─── RENDER ───────────────────────────────────────────────
 
     if (loading) return (
@@ -424,14 +434,11 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
                                     <div className={CARD_HEADER_STYLE}><div><h2 className={TITLE}>Subject Leaderboard</h2><p className={SUBTITLE}>Avg Attendance</p></div></div>
                                     <div className="h-[200px]"><Bar data={barData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } }, animation: { ...ANIMATION, delay: 500 } }} /></div>
                                 </div>
-                                <div className={`${CARD} p-6 bg-red-50/30 border-red-100`}>
+                                <div className={`${CARD} p-6`}>
                                     <div className={CARD_HEADER_STYLE}>
-                                        <div><h2 className={TITLE} style={{ color: '#991B1B' }}>At-Risk Students</h2><p className={SUBTITLE} style={{ color: '#F87171' }}>&lt; 75% Attendance</p></div>
-                                        <ShieldIcon className="w-5 h-5 text-red-500 animate-pulse" />
+                                        <div><h2 className={TITLE}>User Distribution</h2><p className={SUBTITLE}>Platform Demographics</p></div>
                                     </div>
-                                    <div className="space-y-3">
-                                        {atRiskStudents.length > 0 ? atRiskStudents.map(s => <AtRiskStudent key={s.id} student={s} totalLectures={totalLectures} />) : <p className="text-center text-gray-400 text-sm py-4">All students are performing well! 🎉</p>}
-                                    </div>
+                                    <div className="h-[200px] flex justify-center"><Doughnut data={roleData} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, animation: { ...ANIMATION, delay: 600 } }} /></div>
                                 </div>
                             </div>
                         </div>
@@ -439,7 +446,43 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
                 )}
 
                 {/* ═══ OTHER TABS ═══ */}
-                {activeTab === 'analytics' && <div className="text-center py-20 text-gray-400">Detailed Full-Screen Analytics Module Coming Soon</div>}
+                {activeTab === 'analytics' && (
+                    <div className="space-y-8 animate-fadeInUp">
+                        <div className={`${CARD} p-6`}>
+                            <div className={CARD_HEADER_STYLE}>
+                                <div><h2 className={TITLE}>Long-term Velocity</h2><p className={SUBTITLE}>Complete historical attendance rate</p></div>
+                            </div>
+                            <div className="h-[400px] w-full"><Line data={lineData} options={{ maintainAspectRatio: false, plugins: { legend: { display: true, position: 'top' } }, scales: { y: { grid: { borderDash: [4, 4] } } }, animation: ANIMATION }} /></div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className={`${CARD} p-6`}>
+                                <div className={CARD_HEADER_STYLE}>
+                                    <div><h2 className={TITLE}>Subject Insight Matrix</h2><p className={SUBTITLE}>Deep dive into subject popularity</p></div>
+                                </div>
+                                <div className="h-[300px]"><Bar data={barData} options={{ maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }} /></div>
+                            </div>
+                            <div className={`${CARD} p-6`}>
+                                <div className={CARD_HEADER_STYLE}>
+                                    <div><h2 className={TITLE}>Top Tier Scholars</h2><p className={SUBTITLE}>Best Attendance Records</p></div>
+                                </div>
+                                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                                    {data.topStudents.slice(0, 5).map((s, idx) => (
+                                        <div key={s.id} className="flex justify-between items-center p-4 bg-blue-50/50 rounded-xl hover:bg-blue-100 transition-colors">
+                                            <div className="flex gap-4 items-center">
+                                                <div className="w-8 h-8 rounded-full bg-[#052659] text-white flex items-center justify-center font-bold text-xs">{idx + 1}</div>
+                                                <div>
+                                                    <p className="font-bold text-[#021024]">{s.name}</p>
+                                                    <p className="text-xs text-[#5483B3]">{s.roll_number}</p>
+                                                </div>
+                                            </div>
+                                            <span className={BADGE('bg-[#C1E8FF] text-[#052659]')}>{s.attendance_count} Attd</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {activeTab === 'users' && <UsersTab allUsers={data.users} onDelete={handleDeleteUser} onDownload={() => downloadCSV(data.users, 'users.csv')} />}
                 {activeTab === 'lectures' && <LecturesTab activeLectures={data.lectures.filter(l => l.status === 'active')} archivedLectures={data.lectures.filter(l => l.status === 'archived')} onDelete={handleDeleteLecture} onDownload={() => downloadCSV(data.lectures, 'lectures.csv')} />}
                 {activeTab === 'attendance' && <AttendanceTab activeAttendance={data.attendance} archivedAttendance={[]} onDownload={() => downloadCSV(data.attendance, 'attendance.csv')} />}
