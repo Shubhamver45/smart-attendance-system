@@ -234,9 +234,12 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
     const currentYear = new Date().getFullYear();
     const YEARS = Array.from({ length: 4 }, (_, i) => String(currentYear - i));
 
+    const [fetchError, setFetchError] = useState(null);
+
     useEffect(() => {
         const fetchDefaulters = async () => {
             setIsLoading(true);
+            setFetchError(null);
             try {
                 const res = await fetch(`${API_URL}/teacher/reports/defaulters/${teacherId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -244,9 +247,14 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
                 if (res.ok) {
                     const data = await res.json();
                     setDefaulters(data);
+                } else {
+                    const errData = await res.json();
+                    setFetchError(errData.error || 'Server error occurred');
+                    console.error("Backend error:", errData);
                 }
             } catch (error) {
                 console.error("Failed to fetch defaulters:", error);
+                setFetchError(error.message);
             } finally {
                 setIsLoading(false);
             }
@@ -426,7 +434,13 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
                         {isSendingAlerts ? '⏳ Sending Emails...' : <><MailIcon className="w-5 h-5" /> Send Monthly Alerts</>}
                     </button>
                 </div>
-                {isLoading ? <p className="text-center p-4">Calculating...</p> : (defaulters.length > 0 ? (
+                {fetchError && (
+                    <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-4">
+                        <strong>Error loading defaulters:</strong> {fetchError}
+                    </div>
+                )}
+                {isLoading ? <p className="text-center p-4">Calculating...</p> : (
+                    fetchError ? null : (defaulters.length > 0 ? (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left min-w-[600px]">
                             <thead className="bg-red-50 border-b-2 border-red-200">
@@ -451,7 +465,8 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
                             </tbody>
                         </table>
                     </div>
-                ) : <p className="text-slate-500 text-center py-8">🎉 No defaulters found! All students have attendance above 75%.</p>)}
+                ) : <p className="text-slate-500 text-center py-8">🎉 No defaulters found! All students have attendance above 75%.</p>)
+                )}
             </div>
         </main>
     );
