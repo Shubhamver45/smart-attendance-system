@@ -155,26 +155,26 @@ export const ScanQRCodePage = ({ setView, markAttendance, lectures, token }) => 
                             lecture.longitude
                         );
 
-                        // Check if within geofence
-                        const withinGeofence = isWithinGeofence(
-                            studentLocation.latitude,
-                            studentLocation.longitude,
-                            lecture.latitude,
-                            lecture.longitude,
-                            lecture.radius || 100
-                        );
+                        // Use Accuracy Value from the Browser API dynamically
+                        const browserAccuracy = studentLocation.accuracy || 0;
+                        const baseRadius = lecture.radius || 100;
+
+                        // Check if within geofence by subtracting the browser's accuracy margin from the calculated distance.
+                        // We cap the maximum allowed accuracy compensation (e.g., 200m) so a wildly inaccurate GPS (like 5000m) doesn't allow cheating.
+                        const compensatedDistance = Math.max(0, distance - Math.min(browserAccuracy, 200));
+                        const withinGeofence = compensatedDistance <= baseRadius;
 
                         if (withinGeofence) {
                             setScanResult(`Location verified! Marking attendance...`);
                             const success = await markAttendance(lectureId);
                             if (success) {
-                                setScanResult(`✓ Attendance Marked Successfully!\n\nYou are ${formatDistance(distance)} from the lecture location.`);
+                                setScanResult(`✓ Attendance Marked Successfully!\n\nYou are ${formatDistance(distance)} from the lecture.\n(GPS Accuracy: ±${Math.round(browserAccuracy)}m)`);
                                 setTimeout(() => setView('studentHome'), 2500);
                             } else {
                                 setTimeout(() => setView('studentHome'), 3000);
                             }
                         } else {
-                            setScanResult(`❌ Location Verification Failed\n\nYou are ${formatDistance(distance)} away from the lecture location.\n\nRequired: Within ${lecture.radius || 100} meters\n\nPlease move closer to mark attendance.`);
+                            setScanResult(`❌ Location Verification Failed\n\nYou are ${formatDistance(distance)} away from the lecture.\n\nRequired: Within ${baseRadius} meters\n(Your GPS Accuracy: ±${Math.round(browserAccuracy)}m)\n\nPlease move closer to mark attendance.`);
                             setTimeout(() => setView('studentHome'), 5000);
                         }
                     } catch (locationError) {
