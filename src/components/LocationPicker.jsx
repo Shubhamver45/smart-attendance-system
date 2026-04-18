@@ -20,7 +20,17 @@ export const LocationPicker = ({ location, radius, onLocationChange, onRadiusCha
                 accuracy: position.accuracy
             });
             const displayAcc = Math.round(position.accuracy);
-            setLocationStatus(`Location set successfully! (Accuracy: ±${displayAcc}m)`);
+            
+            // ✨ THE FIX: Auto-adjust the radius if the laptop's GPS is highly inaccurate!
+            if (displayAcc > 30) {
+                // E.g. If laptop accuracy is 221m, 10m radius is physically impossible to use. 
+                // We boost the radius safely above the laptop's error margin.
+                const recommendedRadius = Math.max(radius, displayAcc + 20); 
+                onRadiusChange(recommendedRadius);
+                setLocationStatus(`⚠️ Laptop GPS is inaccurate (±${displayAcc}m). Auto-increased radius to ${recommendedRadius}m so students can connect!`);
+            } else {
+                setLocationStatus(`Location set successfully! (Accuracy: ±${displayAcc}m)`);
+            }
         } catch (err) {
             setError(err.message);
         } finally {
@@ -78,8 +88,12 @@ export const LocationPicker = ({ location, radius, onLocationChange, onRadiusCha
 
             {/* Status Messages */}
             {locationStatus && (
-                <div className="bg-blue-50 border border-blue-200 p-2 rounded text-sm text-blue-700">
-                    ✓ {locationStatus}
+                <div className={`p-3 rounded text-sm border ${
+                    locationStatus.includes('⚠️') 
+                        ? 'bg-amber-50 border-amber-300 text-amber-800 font-semibold' 
+                        : 'bg-blue-50 border-blue-200 text-blue-700'
+                }`}>
+                    {locationStatus.includes('⚠️') ? locationStatus : `✓ ${locationStatus}`}
                 </div>
             )}
 
