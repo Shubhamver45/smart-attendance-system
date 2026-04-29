@@ -99,10 +99,10 @@ export const getCurrentLocation = () => {
             }
         );
 
-        // Run the calibration for 6 seconds to give Wi-Fi scanning time to lock on
+        // Run the calibration for 12 seconds to give Wi-Fi scanning time to lock on (important for laptops)
         timeoutId = setTimeout(() => {
             finish();
-        }, 6000);
+        }, 12000);
     });
 };
 

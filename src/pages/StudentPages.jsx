@@ -89,7 +89,10 @@ export const ScanQRCodePage = ({ setView, markAttendance, lectures, token }) => 
 
         const scanner = new Html5QrcodeScanner('reader', {
             qrbox: { width: 250, height: 250 },
-            fps: 5,
+            fps: 10,
+            videoConstraints: {
+                facingMode: "environment"
+            }
         });
 
         const onScanSuccess = async (decodedText, decodedResult) => {
