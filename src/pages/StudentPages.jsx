@@ -17,9 +17,72 @@ const StatCard = ({ title, value, subtitle, color }) => {
     );
 };
 
-export const StudentDashboard = ({ setView, lectures, attendanceRecords, lectureNotification, onAttendNow }) => {
+export const StudentDashboard = ({ user, token, setView, lectures, attendanceRecords, lectureNotification, onAttendNow }) => {
     const myRecords = attendanceRecords;
-    const presentCount = myRecords.filter(rec => rec.status === 'present').length;
+    const presentCount = myRecords.filter(rec => rec.status === 'present' || rec.status === 'excused').length;
+
+    // Phase 2: Leave Management State
+    const [leaves, setLeaves] = useState([]);
+    const [showLeaveModal, setShowLeaveModal] = useState(false);
+    const [leaveForm, setLeaveForm] = useState({ start_date: '', end_date: '', reason: '' });
+    const [isSubmittingLeave, setIsSubmittingLeave] = useState(false);
+
+    useEffect(() => {
+        const fetchLeaves = async () => {
+            if (!user?.id || !token) return;
+            try {
+                const res = await fetch(`${API_URL}/student/leaves/${user.id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) setLeaves(await res.json());
+            } catch (error) {
+                console.error("Failed to fetch leaves", error);
+            }
+        };
+        fetchLeaves();
+    }, [user, token]);
+
+    const handleLeaveSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmittingLeave(true);
+        try {
+            const res = await fetch(`${API_URL}/student/leaves`, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ...leaveForm, studentId: user.id })
+            });
+            if (res.ok) {
+                alert('Leave request submitted!');
+                setShowLeaveModal(false);
+                setLeaveForm({ start_date: '', end_date: '', reason: '' });
+                // Optimistic UI update
+                setLeaves([{...leaveForm, id: Date.now(), status: 'pending', created_at: new Date().toISOString()}, ...leaves]);
+            } else {
+                alert('Error submitting leave');
+            }
+        } catch (error) {
+            console.error("Error submitting leave", error);
+        } finally {
+            setIsSubmittingLeave(false);
+        }
+    };
+
+    // Phase 3: Gamification (Calculate Streak)
+    let currentStreak = 0;
+    // Sort lectures past to present
+    const pastLectures = lectures.filter(l => new Date(`${l.date}T${l.time}`) <= new Date()).sort((a, b) => new Date(`${b.date}T${b.time}`) - new Date(`${a.date}T${a.time}`));
+    
+    for (const lecture of pastLectures) {
+        const attended = myRecords.some(r => r.lecture_id === lecture.id);
+        if (attended) {
+            currentStreak++;
+        } else {
+            break; // Streak broken
+        }
+    }
 
     // THIS IS THE FIX for the "N/A" bug.
     // We create a "Map" for instant lecture name lookups.
@@ -45,6 +108,23 @@ export const StudentDashboard = ({ setView, lectures, attendanceRecords, lecture
                     </div>
                 </div>
             )}
+
+            {/* Phase 3: Gamification Header */}
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-white/80 p-4 rounded-2xl shadow-lg border-2 border-[#C1E8FF]">
+                <div className="flex items-center gap-4">
+                    <div className="text-4xl">🔥</div>
+                    <div>
+                        <h2 className="text-xl font-bold text-[#052659]">{currentStreak} Day Streak</h2>
+                        <p className="text-sm text-slate-500">Keep attending to build your streak!</p>
+                    </div>
+                </div>
+                <div className="flex gap-2">
+                    {attendanceRate >= 95 && <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full font-bold shadow-sm">🏆 Top Scholar</span>}
+                    {currentStreak >= 5 && <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full font-bold shadow-sm">🔥 On Fire</span>}
+                    {presentCount >= 10 && <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold shadow-sm">📚 Dedicated</span>}
+                </div>
+            </div>
+
             {/* UPDATED: Grid is now 3 columns, "Late" card is removed */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
                 <div className="bg-white/80 p-6 rounded-2xl shadow-lg"><h3 className="font-semibold text-slate-500 mb-2">Attendance Rate</h3><p className="text-3xl font-bold text-[#052659]">{attendanceRate}%</p><div className="w-full bg-slate-200 rounded-full h-2.5 mt-2"><div className="bg-[#5483B3] h-2.5 rounded-full" style={{ width: `${attendanceRate}%` }}></div></div><p className="text-sm text-slate-400 mt-1">{presentCount} of {lectures.length} classes</p></div>
@@ -52,7 +132,49 @@ export const StudentDashboard = ({ setView, lectures, attendanceRecords, lecture
                 <StatCard title="Absent" value={finalAbsentCount} subtitle="Missed classes" color="red" />
             </div>
 
-            {/* REMOVED: The entire "Quick Actions" box is gone */}
+            </div>
+
+            {/* Phase 2: Leave Management Section */}
+            <div className="bg-white/80 p-6 rounded-2xl shadow-lg mb-8">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-bold">Leave Management</h3>
+                    <button onClick={() => setShowLeaveModal(true)} className="bg-orange-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors">
+                        Request Leave
+                    </button>
+                </div>
+                {leaves.length > 0 ? (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-slate-50 text-slate-500">
+                                <tr>
+                                    <th className="p-3 rounded-tl-lg">Date Range</th>
+                                    <th className="p-3">Reason</th>
+                                    <th className="p-3 rounded-tr-lg">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {leaves.map(leave => (
+                                    <tr key={leave.id} className="border-t border-slate-100">
+                                        <td className="p-3 font-semibold">{new Date(leave.start_date).toLocaleDateString()} - {new Date(leave.end_date).toLocaleDateString()}</td>
+                                        <td className="p-3 text-slate-600">{leave.reason}</td>
+                                        <td className="p-3">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                                                leave.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                                leave.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                'bg-yellow-100 text-yellow-700'
+                                            }`}>
+                                                {leave.status.toUpperCase()}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <p className="text-slate-500 text-center py-4 bg-slate-50 rounded-lg">No leave requests found.</p>
+                )}
+            </div>
 
             <div className="bg-white/80 p-6 rounded-2xl shadow-lg">
                 <h3 className="text-xl font-bold mb-4">Attendance History</h3>
@@ -74,6 +196,35 @@ export const StudentDashboard = ({ setView, lectures, attendanceRecords, lecture
                     <div className="text-center p-12 flex flex-col items-center gap-4"><CalendarIcon className="w-16 h-16 text-slate-300" /><h4 className="text-xl font-semibold">No records found</h4><p className="text-slate-500">Your attendance history will appear here.</p></div>
                 )}
             </div>
+
+            {/* Leave Application Modal */}
+            {showLeaveModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-[#052659]">Apply for Leave</h2>
+                            <button onClick={() => setShowLeaveModal(false)} className="text-slate-400 hover:text-red-500 text-2xl font-bold">&times;</button>
+                        </div>
+                        <form onSubmit={handleLeaveSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">Start Date</label>
+                                <input type="date" required value={leaveForm.start_date} onChange={e => setLeaveForm({...leaveForm, start_date: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">End Date</label>
+                                <input type="date" required value={leaveForm.end_date} onChange={e => setLeaveForm({...leaveForm, end_date: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">Reason</label>
+                                <textarea required value={leaveForm.reason} onChange={e => setLeaveForm({...leaveForm, reason: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Explain your reason for leave..."></textarea>
+                            </div>
+                            <button type="submit" disabled={isSubmittingLeave} className="w-full bg-[#052659] text-white font-bold py-3 rounded-lg hover:bg-[#021024] disabled:opacity-50 mt-4">
+                                {isSubmittingLeave ? 'Submitting...' : 'Submit Request'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </main>
     );
 };
@@ -83,6 +234,60 @@ export const ScanQRCodePage = ({ setView, markAttendance, lectures, token }) => 
     const [scanResult, setScanResult] = useState(null);
     const [isScanning, setIsScanning] = useState(true);
     const [locationStatus, setLocationStatus] = useState('');
+
+    const verifyIdentityAndMarkAttendance = async (lectureId, isGeofenced = false, distance = null, accuracy = null) => {
+        try {
+            setScanResult('Verifying identity...');
+            setLocationStatus('Please confirm your identity using biometrics or PIN.');
+            
+            // Phase 4: Biometric / Local Device Authentication (Anti-Proxy)
+            if (window.PublicKeyCredential) {
+                const challenge = new Uint8Array(32);
+                window.crypto.getRandomValues(challenge);
+                
+                await navigator.credentials.create({
+                    publicKey: {
+                        challenge: challenge,
+                        rp: { name: "Smart Attendance System" },
+                        user: {
+                            id: new Uint8Array(16),
+                            name: "student",
+                            displayName: "Student"
+                        },
+                        pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+                        authenticatorSelection: {
+                            authenticatorAttachment: "platform", // Forces TouchID/FaceID/Windows Hello
+                            userVerification: "required"
+                        },
+                        timeout: 60000
+                    }
+                });
+            } else {
+                console.warn('WebAuthn not supported on this device. Bypassing biometric check.');
+            }
+
+            setScanResult(`Identity verified. Marking attendance...`);
+            setLocationStatus('Please wait...');
+            const success = await markAttendance(lectureId);
+            
+            if (success) {
+                if (isGeofenced) {
+                    setScanResult(`✓ Attendance Marked Successfully!\n\nYou are ${formatDistance(distance)} from the lecture.\n(GPS Accuracy: ±${Math.round(accuracy)}m)`);
+                } else {
+                    setScanResult('✓ Attendance Marked Successfully!');
+                }
+                setTimeout(() => setView('studentHome'), 2500);
+            } else {
+                setScanResult('❌ Failed to mark attendance.');
+                setTimeout(() => setView('studentHome'), 3000);
+            }
+        } catch (error) {
+            console.error('Biometric verification failed:', error);
+            setScanResult('❌ Identity verification failed.');
+            setLocationStatus('Biometric check cancelled or failed.');
+            setTimeout(() => setView('studentHome'), 3000);
+        }
+    };
 
     useEffect(() => {
         if (!isScanning) return;
@@ -108,8 +313,6 @@ export const ScanQRCodePage = ({ setView, markAttendance, lectures, token }) => 
                     setScanResult(`Verifying location...`);
                     setLocationStatus('Getting your location...');
 
-                    // Find the lecture details — try local cache first, then fetch fresh.
-                    // A new lecture created after login won't be in the local list.
                     let lecture = lectures.find(l => l.id === parseInt(lectureId));
 
                     if (!lecture) {
@@ -122,9 +325,7 @@ export const ScanQRCodePage = ({ setView, markAttendance, lectures, token }) => 
                                 const freshLectures = await freshRes.json();
                                 lecture = freshLectures.find(l => l.id === parseInt(lectureId));
                             }
-                        } catch (fetchErr) {
-                            // Ignore, failure is handled below
-                        }
+                        } catch (fetchErr) {}
                     }
 
                     if (!lecture) {
@@ -133,15 +334,8 @@ export const ScanQRCodePage = ({ setView, markAttendance, lectures, token }) => 
 
                     // Check if lecture has geofencing enabled
                     if (!lecture.latitude || !lecture.longitude) {
-                        // No geofencing for this lecture, proceed normally
-                        setScanResult(`Marking attendance...`);
-                        const success = await markAttendance(lectureId);
-                        if (success) {
-                            setScanResult('✓ Attendance Marked Successfully!');
-                            setTimeout(() => setView('studentHome'), 2000);
-                        } else {
-                            setTimeout(() => setView('studentHome'), 3000);
-                        }
+                        // No geofencing for this lecture, proceed to biometrics
+                        await verifyIdentityAndMarkAttendance(lectureId, false);
                         return;
                     }
 
@@ -150,7 +344,6 @@ export const ScanQRCodePage = ({ setView, markAttendance, lectures, token }) => 
                         const studentLocation = await getCurrentLocation();
                         setLocationStatus('Checking if you are within range...');
 
-                        // Calculate distance
                         const distance = calculateDistance(
                             studentLocation.latitude,
                             studentLocation.longitude,
@@ -158,24 +351,14 @@ export const ScanQRCodePage = ({ setView, markAttendance, lectures, token }) => 
                             lecture.longitude
                         );
 
-                        // Use Accuracy Value from the Browser API dynamically
                         const browserAccuracy = studentLocation.accuracy || 0;
                         const baseRadius = lecture.radius || 100;
-
-                        // Check if within geofence by subtracting the browser's accuracy margin from the calculated distance.
-                        // We cap the maximum allowed accuracy compensation (e.g., 200m) so a wildly inaccurate GPS (like 5000m) doesn't allow cheating.
                         const compensatedDistance = Math.max(0, distance - Math.min(browserAccuracy, 200));
                         const withinGeofence = compensatedDistance <= baseRadius;
 
                         if (withinGeofence) {
-                            setScanResult(`Location verified! Marking attendance...`);
-                            const success = await markAttendance(lectureId);
-                            if (success) {
-                                setScanResult(`✓ Attendance Marked Successfully!\n\nYou are ${formatDistance(distance)} from the lecture.\n(GPS Accuracy: ±${Math.round(browserAccuracy)}m)`);
-                                setTimeout(() => setView('studentHome'), 2500);
-                            } else {
-                                setTimeout(() => setView('studentHome'), 3000);
-                            }
+                            setScanResult(`Location verified! Proceeding to identity check...`);
+                            await verifyIdentityAndMarkAttendance(lectureId, true, distance, browserAccuracy);
                         } else {
                             setScanResult(`❌ Location Verification Failed\n\nYou are ${formatDistance(distance)} away from the lecture.\n\nRequired: Within ${baseRadius} meters\n(Your GPS Accuracy: ±${Math.round(browserAccuracy)}m)\n\nPlease move closer to mark attendance.`);
                             setTimeout(() => setView('studentHome'), 5000);

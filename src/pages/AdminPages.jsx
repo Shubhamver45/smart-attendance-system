@@ -279,6 +279,66 @@ const AttendanceTab = ({ activeAttendance, archivedAttendance, onDownload }) => 
                     </div>
                 </div>
             )}
+            )}
+        </div>
+    );
+};
+
+// Phase 2: Leaves Tab Component
+const LeavesTab = ({ leaves, onApprove, onReject }) => {
+    return (
+        <div className="space-y-6 animate-fadeInUp">
+            <div className="flex justify-between items-center bg-white/40 p-4 rounded-2xl backdrop-blur-sm border border-white/40 shadow-sm">
+                <span className={BADGE('bg-[#052659] text-white self-center')}>Total Requests: {leaves.length}</span>
+                <span className={BADGE('bg-yellow-100 text-yellow-800 self-center')}>Pending: {leaves.filter(l => l.status === 'pending').length}</span>
+            </div>
+
+            {leaves.length === 0 ? <EmptyState icon={<CalendarIcon className="w-10 h-10 text-[#7DA0CA]" />} title="No Leave Requests" desc="All caught up!" /> : (
+                <div className={CARD + " overflow-visible"}>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead><tr className={TABLE_HEADER}>
+                                <th className="px-6 py-4 font-bold rounded-tl-xl">Student</th>
+                                <th className="px-6 py-4 font-bold">Dates</th>
+                                <th className="px-6 py-4 font-bold">Reason</th>
+                                <th className="px-6 py-4 font-bold text-center">Status</th>
+                                <th className="px-6 py-4 font-bold text-center rounded-tr-xl">Action</th>
+                            </tr></thead>
+                            <tbody className="divide-y divide-blue-50">
+                                {leaves.map(l => (
+                                    <tr key={l.id} className="hover:bg-blue-50/50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <p className="font-bold text-[#021024]">{l.student_name}</p>
+                                            <p className="text-xs text-[#5483B3] font-mono">{l.roll_number}</p>
+                                        </td>
+                                        <td className="px-6 py-4 text-[#5483B3] text-xs font-semibold">
+                                            {new Date(l.start_date).toLocaleDateString()} <br/>to {new Date(l.end_date).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-4 text-[#021024] text-xs max-w-xs">{l.reason}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className={BADGE(
+                                                l.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                                                l.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                'bg-yellow-100 text-yellow-700'
+                                            )}>{l.status.toUpperCase()}</span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            {l.status === 'pending' ? (
+                                                <div className="flex justify-center gap-2">
+                                                    <button onClick={() => onApprove(l.id)} className="px-3 py-1 bg-green-500 text-white rounded font-bold text-xs hover:bg-green-600 transition-colors">Approve</button>
+                                                    <button onClick={() => onReject(l.id)} className="px-3 py-1 bg-red-500 text-white rounded font-bold text-xs hover:bg-red-600 transition-colors">Reject</button>
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-400 text-xs font-semibold">Resolved</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -289,7 +349,7 @@ const AttendanceTab = ({ activeAttendance, archivedAttendance, onDownload }) => 
 
 export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }) => {
     const [activeTab, setActiveTab] = useState(initialTab);
-    const [data, setData] = useState({ stats: {}, users: [], lectures: [], attendance: [], trend: [], topStudents: [], subjects: [] });
+    const [data, setData] = useState({ stats: {}, users: [], lectures: [], attendance: [], trend: [], topStudents: [], subjects: [], leaves: [] });
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState(null);
 
@@ -306,11 +366,11 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
     const loadData = async () => {
         setLoading(true);
         try {
-            const endpoints = ['dashboard-stats', 'all-users', 'combined-lectures', 'combined-attendance', 'attendance-trend', 'top-students', 'attendance-by-subject'];
+            const endpoints = ['dashboard-stats', 'all-users', 'combined-lectures', 'combined-attendance', 'attendance-trend', 'top-students', 'attendance-by-subject', 'leaves'];
             const authHeaders = { 'Authorization': `Bearer ${token}` };
             const responses = await Promise.all(endpoints.map(ep => fetch(`${API_URL}/admin/${ep}`, { headers: authHeaders }).then(r => r.ok ? r.json() : null).catch(() => null)));
 
-            const [stats, users, lectures, attendance, trend, topStudents, subjects] = responses;
+            const [stats, users, lectures, attendance, trend, topStudents, subjects, leaves] = responses;
             setData({
                 stats: stats || {},
                 users: users || [],
@@ -318,7 +378,8 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
                 attendance: attendance ? [...(attendance.active || []), ...(attendance.archived || [])] : [],
                 trend: trend || [],
                 topStudents: topStudents || [],
-                subjects: subjects || []
+                subjects: subjects || [],
+                leaves: leaves || []
             });
         } catch (e) { showToast('Failed to load data', 'error'); }
         setLoading(false);
@@ -343,6 +404,22 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
             if (res.ok) { showToast('Lecture archived'); loadData(); }
             else showToast('Failed to delete', 'error');
         } catch (e) { showToast('Error deleting lecture', 'error'); }
+    };
+
+    const handleUpdateLeaveStatus = async (leaveId, status) => {
+        try {
+            const res = await fetch(`${API_URL}/admin/leaves/${leaveId}`, {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify({ status })
+            });
+            if (res.ok) {
+                showToast(`Leave request ${status}`);
+                loadData();
+            } else {
+                showToast(`Failed to ${status} leave`, 'error');
+            }
+        } catch (e) { showToast('Error updating leave', 'error'); }
     };
 
     const handleFormSubmit = async (e) => {
@@ -580,6 +657,7 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
                 {activeTab === 'users' && <UsersTab allUsers={data.users} onAdd={() => openModal('user', 'add')} onEdit={(u) => openModal('user', 'edit', u)} onDelete={handleDeleteUser} onDownload={() => downloadCSV(data.users, 'users.csv')} />}
                 {activeTab === 'lectures' && <LecturesTab activeLectures={data.lectures.filter(l => l.status === 'active')} archivedLectures={data.lectures.filter(l => l.status === 'archived')} onAdd={() => openModal('lecture', 'add')} onEdit={(l) => openModal('lecture', 'edit', l)} onDelete={handleDeleteLecture} onDownload={() => downloadCSV(data.lectures, 'lectures.csv')} />}
                 {activeTab === 'attendance' && <AttendanceTab activeAttendance={data.attendance} archivedAttendance={[]} onDownload={() => downloadCSV(data.attendance, 'attendance.csv')} />}
+                {activeTab === 'leaves' && <LeavesTab leaves={data.leaves} onApprove={(id) => handleUpdateLeaveStatus(id, 'approved')} onReject={(id) => handleUpdateLeaveStatus(id, 'rejected')} />}
 
             </div>
 

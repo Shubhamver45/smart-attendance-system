@@ -23,6 +23,11 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
     const [liveAttendance, setLiveAttendance] = useState([]);
     const [countdown, setCountdown] = useState(30);
 
+    // Manual Attendance State
+    const [manualLecture, setManualLecture] = useState(null);
+    const [manualStudents, setManualStudents] = useState([]);
+    const [isSavingManual, setIsSavingManual] = useState(false);
+
     useEffect(() => {
         if (!activeLecture) {
             setLiveAttendance([]);
@@ -86,6 +91,55 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
         } catch (error) {
             console.error("Failed to download report:", error);
             alert("Error downloading report.");
+        }
+    };
+
+    const openManualAttendance = async (lecture) => {
+        try {
+            const res = await fetch(`${API_URL}/teacher/lecture-report/${lecture.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to fetch report');
+            
+            // Map the data into an array of { studentId, name, roll_number, status }
+            const studentsForManual = data.map(row => ({
+                studentId: row.student_id || row.id,
+                name: row.student_name,
+                roll_number: row.roll_number,
+                status: row.timestamp ? 'present' : 'absent'
+            }));
+            setManualStudents(studentsForManual);
+            setManualLecture(lecture);
+        } catch (error) {
+            console.error("Failed to fetch students for manual entry:", error);
+            alert("Error fetching students.");
+        }
+    };
+
+    const handleSaveManualAttendance = async () => {
+        setIsSavingManual(true);
+        try {
+            const res = await fetch(`${API_URL}/teacher/lectures/${manualLecture.id}/manual-attendance`, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ attendanceData: manualStudents })
+            });
+            if (res.ok) {
+                alert('Attendance updated successfully!');
+                setManualLecture(null);
+            } else {
+                const data = await res.json();
+                alert(`Error: ${data.error}`);
+            }
+        } catch (error) {
+            console.error("Error saving manual attendance:", error);
+            alert("Error saving attendance.");
+        } finally {
+            setIsSavingManual(false);
         }
     };
 
@@ -166,11 +220,14 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
                                     </p>
                                 )}
                             </div>
-                            <div className="flex gap-2 mt-4">
-                                <button onClick={() => setActiveLecture(lecture)} disabled={!!activeLecture} className="w-1/2 bg-green-500 text-white font-semibold py-2 rounded-lg hover:bg-green-600 disabled:bg-slate-400">
+                            <div className="grid grid-cols-3 gap-2 mt-4">
+                                <button onClick={() => setActiveLecture(lecture)} disabled={!!activeLecture} className="bg-green-500 text-white font-semibold py-2 rounded-lg hover:bg-green-600 disabled:bg-slate-400 text-sm">
                                     Set Active
                                 </button>
-                                <button onClick={() => handleDownloadLectureReport(lecture)} disabled={!!activeLecture} className="w-1/2 bg-blue-500 text-white font-semibold py-2 px-2 rounded-lg hover:bg-blue-600 disabled:bg-slate-400 flex items-center justify-center gap-1">
+                                <button onClick={() => openManualAttendance(lecture)} disabled={!!activeLecture} className="bg-orange-500 text-white font-semibold py-2 rounded-lg hover:bg-orange-600 disabled:bg-slate-400 text-sm">
+                                    Manual
+                                </button>
+                                <button onClick={() => handleDownloadLectureReport(lecture)} disabled={!!activeLecture} className="bg-blue-500 text-white font-semibold py-2 px-1 rounded-lg hover:bg-blue-600 disabled:bg-slate-400 flex items-center justify-center gap-1 text-sm">
                                     <DownloadIcon className="w-4 h-4" /> Report
                                 </button>
                             </div>
@@ -182,6 +239,68 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
                     <div className="bg-[#C1E8FF] p-4 rounded-full"><QrCodeIcon className="w-16 h-16 text-[#052659]" /></div>
                     <h3 className="text-2xl font-bold">No lectures yet</h3>
                     <p className="text-slate-500 max-w-sm">Create your first lecture to get started.</p>
+                </div>
+            )}
+            )}
+
+            {/* Manual Attendance Modal */}
+            {manualLecture && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <div>
+                                <h2 className="text-2xl font-bold text-[#052659]">Manual Attendance</h2>
+                                <p className="text-sm text-slate-500">{manualLecture.name}</p>
+                            </div>
+                            <button onClick={() => setManualLecture(null)} className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors">
+                                &times;
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto flex-1">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-100">
+                                    <tr>
+                                        <th className="p-3 rounded-tl-lg">Roll No</th>
+                                        <th className="p-3">Name</th>
+                                        <th className="p-3 rounded-tr-lg text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {manualStudents.map((student, index) => (
+                                        <tr key={student.studentId} className="border-b hover:bg-slate-50">
+                                            <td className="p-3 font-semibold">{student.roll_number || 'N/A'}</td>
+                                            <td className="p-3">{student.name}</td>
+                                            <td className="p-3 text-center">
+                                                <button
+                                                    onClick={() => {
+                                                        const updated = [...manualStudents];
+                                                        updated[index].status = student.status === 'present' ? 'absent' : 'present';
+                                                        setManualStudents(updated);
+                                                    }}
+                                                    className={`px-4 py-1 rounded-full font-bold text-sm transition-colors ${
+                                                        student.status === 'present' 
+                                                        ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                                                        : 'bg-red-100 text-red-700 hover:bg-red-200'
+                                                    }`}
+                                                >
+                                                    {student.status.toUpperCase()}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="p-6 border-t border-slate-100 flex gap-4 bg-slate-50">
+                            <button
+                                onClick={handleSaveManualAttendance}
+                                disabled={isSavingManual}
+                                className="flex-1 bg-[#052659] text-white font-bold py-3 rounded-xl hover:bg-[#021024] disabled:opacity-50"
+                            >
+                                {isSavingManual ? 'Saving...' : 'Save Manual Attendance'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </main>

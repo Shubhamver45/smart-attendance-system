@@ -11,7 +11,8 @@ export const Navbar = ({ user, setView, onLogout }) => {
             { name: 'Dashboard', view: 'adminHome', icon: <ActivityIcon className="w-5 h-5" /> },
             { name: 'Analytics', view: 'adminAnalytics', icon: <BarChartIcon className="w-5 h-5" /> },
             { name: 'Users', view: 'adminUsers', icon: <UsersIcon className="w-5 h-5" /> },
-            { name: 'Reports', view: 'adminReports', icon: <BarChartIcon className="w-5 h-5" /> }
+            { name: 'Reports', view: 'adminReports', icon: <BarChartIcon className="w-5 h-5" /> },
+            { name: 'Leaves', view: 'adminLeaves', icon: <CalendarDaysIcon className="w-5 h-5" /> }
         ]
         : user.role === 'teacher'
             ? [

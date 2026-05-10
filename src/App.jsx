@@ -251,6 +251,7 @@ export default function App() {
                 case 'adminAnalytics': return <AdminDashboard user={user} token={token} setView={setView} initialTab="analytics" />;
                 case 'adminUsers': return <AdminDashboard user={user} token={token} setView={setView} initialTab="users" />;
                 case 'adminReports': return <AdminDashboard user={user} token={token} setView={setView} initialTab="attendance" />;
+                case 'adminLeaves': return <AdminDashboard user={user} token={token} setView={setView} initialTab="leaves" />;
 
                 // --- Teacher Views ---
                 case 'teacherHome': return <TeacherDashboard user={user} setView={setView} lectures={lectures} activeLecture={activeLecture} setActiveLecture={handleSetActiveLecture} token={token} allStudents={registeredStudents} />;
@@ -258,7 +259,7 @@ export default function App() {
                 case 'createLecture': return <CreateLecturePage setView={setView} addLecture={addLecture} setActiveLecture={handleSetActiveLecture} />;
 
                 // --- Student Views ---
-                case 'studentHome': return <StudentDashboard user={user} setView={setView} lectures={lectures} attendanceRecords={attendanceRecords} lectureNotification={lectureNotification} onAttendNow={handleAttendFromNotification} />;
+                case 'studentHome': return <StudentDashboard user={user} token={token} setView={setView} lectures={lectures} attendanceRecords={attendanceRecords} lectureNotification={lectureNotification} onAttendNow={handleAttendFromNotification} />;
                 case 'scanQRCode': return <ScanQRCodePage setView={setView} markAttendance={markAttendance} lectures={lectures} token={token} />;
                 case 'viewSchedule': return <ViewSchedulePage setView={setView} lectures={lectures} />;
                 case 'studentProfile': return <StudentProfilePage setView={setView} user={user} token={token} />;
