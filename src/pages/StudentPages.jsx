@@ -1,3 +1,4 @@
+// v2.0 - Fixed Syntax Errors
 import React, { useState, useEffect } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode'; // Import the new scanner package
 import { CalendarIcon, MapPinIcon, QrCodeIcon, CalendarDaysIcon } from '../components/Icons.jsx';
