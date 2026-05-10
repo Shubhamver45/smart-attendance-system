@@ -279,7 +279,6 @@ const AttendanceTab = ({ activeAttendance, archivedAttendance, onDownload }) => 
                     </div>
                 </div>
             )}
-            )}
         </div>
     );
 };

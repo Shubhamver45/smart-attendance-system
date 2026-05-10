@@ -241,7 +241,6 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
                     <p className="text-slate-500 max-w-sm">Create your first lecture to get started.</p>
                 </div>
             )}
-            )}
 
             {/* Manual Attendance Modal */}
             {manualLecture && (

@@ -132,8 +132,6 @@ export const StudentDashboard = ({ user, token, setView, lectures, attendanceRec
                 <StatCard title="Absent" value={finalAbsentCount} subtitle="Missed classes" color="red" />
             </div>
 
-            </div>
-
             {/* Phase 2: Leave Management Section */}
             <div className="bg-white/80 p-6 rounded-2xl shadow-lg mb-8">
                 <div className="flex justify-between items-center mb-4">
