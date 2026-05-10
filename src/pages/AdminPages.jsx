@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler, RadialLinearScale } from 'chart.js';
 import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2';
-import { BarChartIcon, DownloadIcon, TrashIcon, UsersIcon, ActivityIcon, BookOpenIcon, UserIcon, GraduationCapIcon, ShieldIcon, XIcon, CalendarIcon, LockIcon } from '../components/Icons.jsx';
+import { BarChartIcon, DownloadIcon, TrashIcon, UsersIcon, ActivityIcon, BookOpenIcon, UserIcon, GraduationCapIcon, ShieldIcon, XIcon, CalendarIcon, LockIcon, PlusIcon, EditIcon } from '../components/Icons.jsx';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler, RadialLinearScale);
@@ -18,7 +18,8 @@ const TITLE = "text-lg font-bold text-[#021024] tracking-tight";
 const SUBTITLE = "text-xs font-semibold text-[#5483B3] uppercase tracking-wider mt-0.5";
 const BADGE = (color) => `px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide ${color} shadow-sm`;
 const BTN_PRIMARY = "flex items-center gap-2 px-4 py-2 bg-[#052659] text-white rounded-xl hover:bg-[#021024] transition-all text-xs font-bold uppercase tracking-wide shadow-md hover:shadow-lg hover:-translate-y-0.5";
-const INPUT = "flex-1 px-4 py-2.5 rounded-xl border border-[#C1E8FF] text-sm outline-none focus:ring-2 focus:ring-[#052659]/30 bg-white/80 backdrop-blur-sm placeholder-[#7DA0CA] transition-all focus:border-[#052659]";
+const BTN_SECONDARY = "flex items-center gap-2 px-4 py-2 bg-[#C1E8FF] text-[#052659] rounded-xl hover:bg-[#7DA0CA] hover:text-white transition-all text-xs font-bold uppercase tracking-wide shadow-sm";
+const INPUT = "flex-1 w-full px-4 py-2.5 rounded-xl border border-[#C1E8FF] text-sm outline-none focus:ring-2 focus:ring-[#052659]/30 bg-white/80 backdrop-blur-sm placeholder-[#7DA0CA] transition-all focus:border-[#052659]";
 const TABLE_HEADER = "bg-gradient-to-r from-[#052659] to-[#0A3A7E] text-white text-xs uppercase tracking-wider";
 
 // Animation Config
@@ -87,11 +88,28 @@ const EmptyState = ({ icon, title, desc }) => (
     </div>
 );
 
+const Modal = ({ isOpen, onClose, title, children }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#021024]/40 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fadeInUp m-auto">
+                <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-[#F8FAFC]">
+                    <h3 className="font-bold text-[#052659] text-lg">{title}</h3>
+                    <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded-full transition-colors"><XIcon className="w-5 h-5 text-gray-500" /></button>
+                </div>
+                <div className="p-6 max-h-[80vh] overflow-y-auto">
+                    {children}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // ═══════════════════════════════════════════════════════════
 // TAB COMPONENTS
 // ═══════════════════════════════════════════════════════════
 
-const UsersTab = ({ allUsers, onDelete, onDownload }) => {
+const UsersTab = ({ allUsers, onAdd, onEdit, onDelete, onDownload }) => {
     const [search, setSearch] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
 
@@ -103,18 +121,19 @@ const UsersTab = ({ allUsers, onDelete, onDownload }) => {
 
     return (
         <div className="space-y-6 animate-fadeInUp">
-            <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white/40 p-4 rounded-2xl backdrop-blur-sm border border-white/40 shadow-sm">
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white/40 p-4 rounded-2xl backdrop-blur-sm border border-white/40 shadow-sm">
                 <div className="flex gap-2">
                     <span className={BADGE('bg-blue-100 text-blue-800 border border-blue-200')}>Teachers: {allUsers.filter(u => u.role === 'teacher').length}</span>
                     <span className={BADGE('bg-emerald-100 text-emerald-800 border border-emerald-200')}>Students: {allUsers.filter(u => u.role === 'student').length}</span>
                 </div>
-                <div className="flex gap-3 w-full sm:w-auto">
-                    <input type="text" placeholder="Search users..." className={INPUT} value={search} onChange={e => setSearch(e.target.value)} />
-                    <select className={INPUT + " sm:max-w-[140px]"} value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
+                <div className="flex flex-wrap gap-3 w-full md:w-auto items-center">
+                    <input type="text" placeholder="Search users..." className={INPUT + " md:w-48"} value={search} onChange={e => setSearch(e.target.value)} />
+                    <select className={INPUT + " md:w-32"} value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
                         <option value="all">All Roles</option>
                         <option value="teacher">Teachers</option>
                         <option value="student">Students</option>
                     </select>
+                    <button onClick={onAdd} className={BTN_SECONDARY}><PlusIcon className="w-4 h-4" /> Add User</button>
                     <button onClick={onDownload} className={BTN_PRIMARY}><DownloadIcon className="w-4 h-4" /> Export</button>
                 </div>
             </div>
@@ -127,7 +146,6 @@ const UsersTab = ({ allUsers, onDelete, onDownload }) => {
                                 <th className="px-6 py-4 font-bold rounded-tl-xl">User</th>
                                 <th className="px-6 py-4 font-bold">Role</th>
                                 <th className="px-6 py-4 font-bold">Details</th>
-                                <th className="px-6 py-4 font-bold">Joined</th>
                                 <th className="px-6 py-4 font-bold text-center rounded-tr-xl">Action</th>
                             </tr></thead>
                             <tbody className="divide-y divide-blue-50">
@@ -146,9 +164,11 @@ const UsersTab = ({ allUsers, onDelete, onDownload }) => {
                                         </td>
                                         <td className="px-6 py-4"><span className={BADGE(u.role === 'teacher' ? 'bg-[#052659]/10 text-[#052659] border border-[#052659]/20' : 'bg-[#5483B3]/10 text-[#5483B3] border border-[#5483B3]/20')}>{u.role}</span></td>
                                         <td className="px-6 py-4 text-[#5483B3] font-mono text-xs">{u.roll_number || u.enrollment_number || '—'}</td>
-                                        <td className="px-6 py-4 text-[#7DA0CA] text-xs font-mono">{u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
                                         <td className="px-6 py-4 text-center">
-                                            <button onClick={() => onDelete(u.id, u.name)} className="p-2 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all hover:scale-110"><TrashIcon className="w-4 h-4" /></button>
+                                            <div className="flex justify-center gap-2">
+                                                <button onClick={() => onEdit(u)} className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all hover:scale-110" title="Edit User"><EditIcon className="w-4 h-4" /></button>
+                                                <button onClick={() => onDelete(u.id, u.name)} className="p-2 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all hover:scale-110" title="Delete User"><TrashIcon className="w-4 h-4" /></button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -161,7 +181,7 @@ const UsersTab = ({ allUsers, onDelete, onDownload }) => {
     );
 };
 
-const LecturesTab = ({ activeLectures, archivedLectures, onDelete, onDownload }) => {
+const LecturesTab = ({ activeLectures, archivedLectures, onAdd, onEdit, onDelete, onDownload }) => {
     const [search, setSearch] = useState('');
     const [filter, setFilter] = useState('all');
     const all = [...activeLectures, ...archivedLectures];
@@ -174,14 +194,15 @@ const LecturesTab = ({ activeLectures, archivedLectures, onDelete, onDownload })
 
     return (
         <div className="space-y-6 animate-fadeInUp">
-            <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white/40 p-4 rounded-2xl backdrop-blur-sm border border-white/40 shadow-sm">
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white/40 p-4 rounded-2xl backdrop-blur-sm border border-white/40 shadow-sm">
                 <div className="flex gap-2">
                     <span className={BADGE('bg-emerald-100 text-emerald-800')}>Active: {activeLectures.length}</span>
                     <span className={BADGE('bg-amber-100 text-amber-800')}>Archived: {archivedLectures.length}</span>
                 </div>
-                <div className="flex gap-3 w-full sm:w-auto">
-                    <input type="text" placeholder="Search lectures..." className={INPUT} value={search} onChange={e => setSearch(e.target.value)} />
-                    <select className={INPUT + " sm:max-w-[120px]"} value={filter} onChange={e => setFilter(e.target.value)}><option value="all">All</option><option value="active">Active</option><option value="archived">Archived</option></select>
+                <div className="flex flex-wrap gap-3 w-full md:w-auto items-center">
+                    <input type="text" placeholder="Search lectures..." className={INPUT + " md:w-48"} value={search} onChange={e => setSearch(e.target.value)} />
+                    <select className={INPUT + " md:w-32"} value={filter} onChange={e => setFilter(e.target.value)}><option value="all">All</option><option value="active">Active</option><option value="archived">Archived</option></select>
+                    <button onClick={onAdd} className={BTN_SECONDARY}><PlusIcon className="w-4 h-4" /> Add Lecture</button>
                     <button onClick={onDownload} className={BTN_PRIMARY}><DownloadIcon className="w-4 h-4" /> Export</button>
                 </div>
             </div>
@@ -192,8 +213,7 @@ const LecturesTab = ({ activeLectures, archivedLectures, onDelete, onDownload })
                             <thead><tr className={TABLE_HEADER}>
                                 <th className="px-6 py-4 font-bold rounded-tl-xl">Lecture</th>
                                 <th className="px-6 py-4 font-bold">Teacher</th>
-                                <th className="px-6 py-4 font-bold text-center">Date</th>
-                                <th className="px-6 py-4 font-bold text-center">Attd.</th>
+                                <th className="px-6 py-4 font-bold text-center">Date/Time</th>
                                 <th className="px-6 py-4 font-bold text-center">Status</th>
                                 <th className="px-6 py-4 font-bold text-center rounded-tr-xl">Action</th>
                             </tr></thead>
@@ -202,10 +222,14 @@ const LecturesTab = ({ activeLectures, archivedLectures, onDelete, onDownload })
                                     <tr key={`${l.status}-${l.id}`} className="hover:bg-blue-50/50 transition-colors">
                                         <td className="px-6 py-4"><p className="font-bold text-[#021024]">{l.name}</p><p className="text-xs text-[#5483B3]">{l.subject}</p></td>
                                         <td className="px-6 py-4 text-[#5483B3] text-xs">{l.teacher_name}</td>
-                                        <td className="px-6 py-4 text-center text-[#7DA0CA] font-mono text-xs">{new Date(l.date || l.created_at).toLocaleDateString()}</td>
-                                        <td className="px-6 py-4 text-center"><span className="font-bold text-[#052659] bg-[#C1E8FF] px-2 py-1 rounded-md">{l.attendance_count || 0}</span></td>
+                                        <td className="px-6 py-4 text-center text-[#7DA0CA] font-mono text-xs">{new Date(l.date || l.created_at).toLocaleDateString()}<br/>{l.time || ''}</td>
                                         <td className="px-6 py-4 text-center"><span className={BADGE(l.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700')}>{l.status}</span></td>
-                                        <td className="px-6 py-4 text-center">{l.status === 'active' ? <button onClick={() => onDelete(l.id, l.name)} className="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg"><TrashIcon className="w-4 h-4" /></button> : <span className="text-gray-300">—</span>}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            <div className="flex justify-center gap-2">
+                                                {l.status === 'active' && <button onClick={() => onEdit(l)} className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all hover:scale-110" title="Edit Lecture"><EditIcon className="w-4 h-4" /></button>}
+                                                {l.status === 'active' ? <button onClick={() => onDelete(l.id, l.name)} className="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg" title="Archive"><TrashIcon className="w-4 h-4" /></button> : <span className="text-gray-300">—</span>}
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -269,7 +293,12 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState(null);
 
-    const headers = { 'Authorization': `Bearer ${token}` };
+    // Modal State
+    const [modalConfig, setModalConfig] = useState({ isOpen: false, type: '', mode: '', data: null });
+    const [formData, setFormData] = useState({});
+    const [resetPwd, setResetPwd] = useState('');
+
+    const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
     const showToast = (message, type = 'success') => { setToast({ message, type }); setTimeout(() => setToast(null), 4000); };
 
     useEffect(() => { setActiveTab(initialTab); }, [initialTab]);
@@ -278,7 +307,8 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
         setLoading(true);
         try {
             const endpoints = ['dashboard-stats', 'all-users', 'combined-lectures', 'combined-attendance', 'attendance-trend', 'top-students', 'attendance-by-subject'];
-            const responses = await Promise.all(endpoints.map(ep => fetch(`${API_URL}/admin/${ep}`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null)));
+            const authHeaders = { 'Authorization': `Bearer ${token}` };
+            const responses = await Promise.all(endpoints.map(ep => fetch(`${API_URL}/admin/${ep}`, { headers: authHeaders }).then(r => r.ok ? r.json() : null).catch(() => null)));
 
             const [stats, users, lectures, attendance, trend, topStudents, subjects] = responses;
             setData({
@@ -300,7 +330,7 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
     const handleDeleteUser = async (id, name) => {
         if (!confirm(`Delete user ${name}? This cannot be undone.`)) return;
         try {
-            const res = await fetch(`${API_URL}/admin/users/${id}`, { method: 'DELETE', headers });
+            const res = await fetch(`${API_URL}/admin/users/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
             if (res.ok) { showToast('User deleted'); loadData(); }
             else showToast('Failed to delete', 'error');
         } catch (e) { showToast('Error deleting user', 'error'); }
@@ -309,25 +339,89 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
     const handleDeleteLecture = async (id, name) => {
         if (!confirm(`Delete lecture ${name}? It will be archived.`)) return;
         try {
-            const res = await fetch(`${API_URL}/admin/lectures/${id}`, { method: 'DELETE', headers });
+            const res = await fetch(`${API_URL}/admin/lectures/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
             if (res.ok) { showToast('Lecture archived'); loadData(); }
             else showToast('Failed to delete', 'error');
         } catch (e) { showToast('Error deleting lecture', 'error'); }
     };
 
+    const handleFormSubmit = async (e) => {
+        e.preventDefault();
+        const { type, mode, data: initialData } = modalConfig;
+        
+        let url = `${API_URL}/admin/${type}s`;
+        let method = mode === 'add' ? 'POST' : 'PUT';
+        if (mode === 'edit') url += `/${initialData.id}`;
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers,
+                body: JSON.stringify(formData)
+            });
+            const result = await res.json();
+            
+            if (res.ok) {
+                showToast(`${type} ${mode === 'add' ? 'created' : 'updated'} successfully`);
+                setModalConfig({ isOpen: false, type: '', mode: '', data: null });
+                loadData();
+            } else {
+                showToast(result.error || 'Operation failed', 'error');
+            }
+        } catch (err) {
+            showToast('Network error', 'error');
+        }
+    };
+
+    const handleResetPassword = async () => {
+        if (!resetPwd || resetPwd.length < 6) {
+            showToast('Password must be at least 6 characters', 'error');
+            return;
+        }
+        try {
+            const res = await fetch(`${API_URL}/admin/users/${modalConfig.data.id}/reset-password`, {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify({ newPassword: resetPwd })
+            });
+            if (res.ok) {
+                showToast('Password reset successfully');
+                setResetPwd('');
+            } else {
+                showToast('Failed to reset password', 'error');
+            }
+        } catch (err) {
+            showToast('Network error', 'error');
+        }
+    };
+
+    const openModal = (type, mode, initialData = null) => {
+        setModalConfig({ isOpen: true, type, mode, data: initialData });
+        if (mode === 'edit' && initialData) {
+            // strip out fields that shouldn't be edited directly or reformat dates
+            const fd = { ...initialData };
+            if (type === 'lecture' && fd.date) {
+                fd.date = new Date(fd.date).toISOString().split('T')[0];
+            }
+            setFormData(fd);
+        } else {
+            setFormData(type === 'user' ? { role: 'student' } : { date: new Date().toISOString().split('T')[0], radius: 100 });
+        }
+        setResetPwd('');
+    };
+
     const downloadCSV = (dataItems, filename) => {
         if (!dataItems.length) { showToast('No data to export', 'error'); return; }
-        const headers = Object.keys(dataItems[0]).join(',');
+        const headersArr = Object.keys(dataItems[0]).join(',');
         const rows = dataItems.map(obj => Object.values(obj).map(v => `"${v}"`).join(',')).join('\n');
-        const blob = new Blob([headers + '\n' + rows], { type: 'text/csv' });
+        const blob = new Blob([headersArr + '\n' + rows], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
     };
 
     // Derived Analytics & Charts
     const totalLectures = data.lectures.filter(l => l.status === 'active').length + data.lectures.filter(l => l.status === 'archived').length || 1;
-    const atRiskStudents = data.topStudents.filter(s => (parseInt(s.attendance_count) / totalLectures) < 0.75).slice(0, 5);
-
+    
     const gradient = (ctx, colorStart, colorEnd) => {
         const g = ctx.createLinearGradient(0, 0, 0, 400);
         g.addColorStop(0, colorStart); g.addColorStop(1, colorEnd);
@@ -396,10 +490,10 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
                     </div>
                 </div>
 
-                <div className="flex bg-white/60 backdrop-blur-md p-1.5 rounded-2xl shadow-sm border border-white/50">
+                <div className="flex bg-white/60 backdrop-blur-md p-1.5 rounded-2xl shadow-sm border border-white/50 overflow-x-auto">
                     {['overview', 'analytics', 'users', 'lectures', 'attendance'].map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)}
-                            className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${activeTab === tab
+                            className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap ${activeTab === tab
                                 ? 'bg-[#052659] text-white shadow-lg shadow-[#052659]/30 scale-105'
                                 : 'text-[#5483B3] hover:bg-white/50'}`}>
                             {tab}
@@ -483,11 +577,67 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
                         </div>
                     </div>
                 )}
-                {activeTab === 'users' && <UsersTab allUsers={data.users} onDelete={handleDeleteUser} onDownload={() => downloadCSV(data.users, 'users.csv')} />}
-                {activeTab === 'lectures' && <LecturesTab activeLectures={data.lectures.filter(l => l.status === 'active')} archivedLectures={data.lectures.filter(l => l.status === 'archived')} onDelete={handleDeleteLecture} onDownload={() => downloadCSV(data.lectures, 'lectures.csv')} />}
+                {activeTab === 'users' && <UsersTab allUsers={data.users} onAdd={() => openModal('user', 'add')} onEdit={(u) => openModal('user', 'edit', u)} onDelete={handleDeleteUser} onDownload={() => downloadCSV(data.users, 'users.csv')} />}
+                {activeTab === 'lectures' && <LecturesTab activeLectures={data.lectures.filter(l => l.status === 'active')} archivedLectures={data.lectures.filter(l => l.status === 'archived')} onAdd={() => openModal('lecture', 'add')} onEdit={(l) => openModal('lecture', 'edit', l)} onDelete={handleDeleteLecture} onDownload={() => downloadCSV(data.lectures, 'lectures.csv')} />}
                 {activeTab === 'attendance' && <AttendanceTab activeAttendance={data.attendance} archivedAttendance={[]} onDownload={() => downloadCSV(data.attendance, 'attendance.csv')} />}
 
             </div>
+
+            {/* Global Modal for Create/Edit */}
+            <Modal isOpen={modalConfig.isOpen} onClose={() => setModalConfig({ ...modalConfig, isOpen: false })} title={`${modalConfig.mode === 'add' ? 'Add New' : 'Edit'} ${modalConfig.type === 'user' ? 'User' : 'Lecture'}`}>
+                <form onSubmit={handleFormSubmit} className="space-y-4">
+                    {modalConfig.type === 'user' && (
+                        <>
+                            {modalConfig.mode === 'add' && <input className={INPUT} placeholder="User ID (e.g., T001)" required value={formData.id || ''} onChange={e => setFormData({ ...formData, id: e.target.value })} />}
+                            <input className={INPUT} placeholder="Full Name" required value={formData.name || ''} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                            <input type="email" className={INPUT} placeholder="Email" required value={formData.email || ''} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                            {modalConfig.mode === 'add' && <input type="password" className={INPUT} placeholder="Password" required minLength="6" value={formData.password || ''} onChange={e => setFormData({ ...formData, password: e.target.value })} />}
+                            <select className={INPUT} value={formData.role || 'student'} onChange={e => setFormData({ ...formData, role: e.target.value })}>
+                                <option value="student">Student</option>
+                                <option value="teacher">Teacher</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                            <input className={INPUT} placeholder="Roll Number (optional)" value={formData.roll_number || ''} onChange={e => setFormData({ ...formData, roll_number: e.target.value })} />
+                            <input className={INPUT} placeholder="Enrollment Number (optional)" value={formData.enrollment_number || ''} onChange={e => setFormData({ ...formData, enrollment_number: e.target.value })} />
+                        </>
+                    )}
+
+                    {modalConfig.type === 'lecture' && (
+                        <>
+                            <input className={INPUT} placeholder="Subject Name" required value={formData.subject || ''} onChange={e => setFormData({ ...formData, subject: e.target.value })} />
+                            <input type="date" className={INPUT} required value={formData.date || ''} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+                            <input type="time" className={INPUT} required value={formData.time || ''} onChange={e => setFormData({ ...formData, time: e.target.value })} />
+                            <select className={INPUT} required value={formData.teacher_id || ''} onChange={e => setFormData({ ...formData, teacher_id: e.target.value })}>
+                                <option value="" disabled>Select Teacher</option>
+                                {data.users.filter(u => u.role === 'teacher').map(t => (
+                                    <option key={t.id} value={t.id}>{t.name} ({t.email})</option>
+                                ))}
+                            </select>
+                            <div className="flex gap-4">
+                                <input type="number" step="any" className={INPUT} placeholder="Lat (optional)" value={formData.latitude || ''} onChange={e => setFormData({ ...formData, latitude: e.target.value })} />
+                                <input type="number" step="any" className={INPUT} placeholder="Lng (optional)" value={formData.longitude || ''} onChange={e => setFormData({ ...formData, longitude: e.target.value })} />
+                            </div>
+                            <input type="number" className={INPUT} placeholder="Radius in meters (default 100)" value={formData.radius || ''} onChange={e => setFormData({ ...formData, radius: e.target.value })} />
+                        </>
+                    )}
+
+                    <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
+                        <button type="button" onClick={() => setModalConfig({ ...modalConfig, isOpen: false })} className="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-700">Cancel</button>
+                        <button type="submit" className={BTN_PRIMARY}>{modalConfig.mode === 'add' ? 'Create' : 'Save Changes'}</button>
+                    </div>
+                </form>
+
+                {/* Password Reset Section for Edit Mode */}
+                {modalConfig.type === 'user' && modalConfig.mode === 'edit' && (
+                    <div className="mt-6 pt-6 border-t border-gray-200">
+                        <h4 className="text-sm font-bold text-red-600 mb-3 flex items-center gap-2"><LockIcon className="w-4 h-4"/> Admin Password Override</h4>
+                        <div className="flex gap-3">
+                            <input type="password" placeholder="New Password" minLength="6" className={INPUT + " !border-red-200 focus:!border-red-400"} value={resetPwd} onChange={e => setResetPwd(e.target.value)} />
+                            <button type="button" onClick={handleResetPassword} className="px-4 py-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 font-bold text-xs uppercase tracking-wide">Reset</button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 };
