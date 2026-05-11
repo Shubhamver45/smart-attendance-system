@@ -6,10 +6,10 @@ import { UserIcon, GraduationCapIcon, BookOpenIcon, ShieldIcon } from '../compon
 
 // This is a sub-component used only by LandingPage
 const RoleCard = ({ icon, title, description, buttonText, onClick, isPrimary }) => (
-  <div className="glass p-8 rounded-2xl text-center flex flex-col items-center liquid-hover transition-all duration-300">
-    <div className="mb-4 p-4 bg-slate-100 rounded-full dark:bg-slate-800">{icon}</div>
-    <h3 className="text-2xl font-bold mb-2 text-[#021024] dark:text-white">{title}</h3>
-    <p className="text-slate-600 dark:text-slate-400 mb-6 flex-grow">{description}</p>
+  <div className="bg-white p-8 rounded-2xl shadow-xl text-center flex flex-col items-center transition-transform hover:-translate-y-2">
+    <div className="mb-4 p-4 bg-slate-100 rounded-full">{icon}</div>
+    <h3 className="text-2xl font-bold mb-2 text-[#021024]">{title}</h3>
+    <p className="text-slate-600 mb-6 flex-grow">{description}</p>
     <button
       onClick={onClick}
       className={`w-full py-3 rounded-lg font-semibold text-lg transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg ${isPrimary ? 'bg-[#052659] text-white hover:bg-[#021024]' : 'bg-[#7DA0CA] text-[#021024] hover:bg-[#5483B3]'}`}
@@ -26,7 +26,7 @@ export const LandingPage = ({ setView }) => {
   return (
     <>
       {/* This container is a flex column to ensure the footer is pushed down */}
-      <div className="w-full flex flex-col min-h-screen">
+      <div className="w-full text-gray-800 flex flex-col min-h-screen">
         {/* 'flex-grow' pushes the footer down, 'pt-12' adds space for the header */}
         <main className="flex flex-col items-center justify-center flex-grow p-4 pt-12">
           <div className="text-center mb-12 text-[#021024]">
@@ -76,7 +76,7 @@ export const LandingPage = ({ setView }) => {
       </Modal>
 
       <Modal isOpen={showFeaturesModal} onClose={() => setShowFeaturesModal(false)} title="Key Features">
-        <ul className="list-disc list-inside space-y-2 text-slate-600 dark:text-slate-400">
+        <ul className="list-disc list-inside space-y-2 text-slate-600">
           <li><span className="font-semibold">Secure QR Code Scanning:</span> Students scan a unique, timed QR code to mark their attendance.</li>
           <li><span className="font-semibold">Role-Based Dashboards:</span> Separate, intuitive dashboards for teachers and students.</li>
           <li><span className="font-semibold">Real-time Tracking:</span> Teachers can see live updates as students mark their attendance.</li>
