@@ -30,15 +30,15 @@ export const Navbar = ({ user, setView, onLogout, isDarkMode, setIsDarkMode }) =
             <div className="flex items-center gap-3">
                 <BookOpenIcon className="w-8 h-8 text-[#052659] dark:text-sky-400" />
                 <div>
-                    <h1 className="text-xl font-bold text-[#021024] dark:text-white" onClick={() => setView('landing')} style={{ cursor: 'pointer' }}>AttendanceHub</h1>
-                    {user && <p className="text-sm text-slate-500">Welcome, {user.name}</p>}
+                    <h1 className="text-xl font-bold text-[#052659] dark:text-white" onClick={() => setView('landing')} style={{ cursor: 'pointer' }}>AttendanceHub</h1>
+                    {user && <p className="text-sm text-slate-500 dark:text-slate-300">Welcome, {user.name}</p>}
                 </div>
             </div>
             <div className="flex items-center gap-2 md:gap-4">
                 {!user && (
-                    <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-600 dark:text-slate-300 mr-4">
-                        <button onClick={() => setView('teacherLogin')} className="hover:text-[#052659] dark:hover:text-sky-400">Teacher Portal</button>
-                        <button onClick={() => setView('studentLogin')} className="hover:text-[#052659] dark:hover:text-sky-400">Student Portal</button>
+                    <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-[#052659] dark:text-sky-400 mr-4">
+                        <button onClick={() => setView('teacherLogin')} className="hover:opacity-80">Teacher Portal</button>
+                        <button onClick={() => setView('studentLogin')} className="hover:opacity-80">Student Portal</button>
                     </nav>
                 )}
                 {navLinks.map(link => {

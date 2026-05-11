@@ -1,12 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    --primary: #0f172a;
-    --accent: #38bdf8;
-    --accent-secondary: #818cf8;
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.5);
-    --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    --primary: #052659;
+    --accent: #5483B3;
+    --glass-bg: rgba(255, 255, 255, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.4);
+    --bg-gradient: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
 }
 
 .dark {
@@ -24,7 +23,7 @@ body {
     background: var(--bg-gradient);
     min-height: 100vh;
     color: var(--primary);
-    transition: background 0.5s ease;
+    transition: all 0.4s ease;
 }
 
 /* Liquid Glass 2.0 */
