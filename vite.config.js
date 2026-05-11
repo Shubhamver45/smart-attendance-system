@@ -33,6 +33,38 @@ export default defineConfig({
             purpose: 'any maskable'
           }
         ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/attendence-backend-tfw2\.onrender\.com\/api\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/attendence-backend-tfw2\.onrender\.com\/api\/student\/mark-attendance/i,
+            handler: 'NetworkOnly',
+            method: 'POST',
+            options: {
+              backgroundSync: {
+                name: 'attendance-queue',
+                options: {
+                  maxRetentionTime: 24 * 60 // Retry for up to 24 hours
+                }
+              }
+            }
+          }
+        ]
       }
     })
   ],
