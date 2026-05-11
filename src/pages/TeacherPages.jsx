@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { InputField } from '../components/InputField.jsx';
 import { LocationPicker } from '../components/LocationPicker.jsx';
-import { BookOpenIcon, PlusIcon, QrCodeIcon, CalendarIcon, DownloadIcon, BarChartIcon, MapPinIcon, MailIcon } from '../components/Icons.jsx';
+import { BookOpenIcon, PlusIcon, QrCodeIcon, CalendarIcon, DownloadIcon, BarChartIcon, MapPinIcon, MailIcon, CalendarDaysIcon, CheckIcon, XIcon } from '../components/Icons.jsx';
 
 // Define the API_URL at the top of the file to be used by all components
 const API_URL = "https://attendence-backend-tfw2.onrender.com/api";
@@ -27,6 +27,43 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
     const [manualLecture, setManualLecture] = useState(null);
     const [manualStudents, setManualStudents] = useState([]);
     const [isSavingManual, setIsSavingManual] = useState(false);
+
+    // Leaves Management State
+    const [showLeaves, setShowLeaves] = useState(false);
+    const [teacherLeaves, setTeacherLeaves] = useState([]);
+    const [isLeavesLoading, setIsLeavesLoading] = useState(false);
+
+    const fetchTeacherLeaves = async () => {
+        setIsLeavesLoading(true);
+        try {
+            const res = await fetch(`${API_URL}/teacher/leaves`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (res.ok) setTeacherLeaves(data);
+        } catch (e) { console.error(e); }
+        setIsLeavesLoading(false);
+    };
+
+    const handleUpdateLeaveStatus = async (id, status) => {
+        try {
+            const res = await fetch(`${API_URL}/teacher/leaves/${id}`, {
+                method: 'PUT',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status })
+            });
+            if (res.ok) {
+                fetchTeacherLeaves();
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    useEffect(() => {
+        if (showLeaves) fetchTeacherLeaves();
+    }, [showLeaves]);
 
     useEffect(() => {
         if (!activeLecture) {
@@ -189,6 +226,9 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
                     <p className="text-slate-600">Activate a lecture or download a past report.</p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <button onClick={() => setShowLeaves(true)} className="w-full sm:w-auto bg-amber-100 text-amber-800 font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-amber-200">
+                        <CalendarDaysIcon className="w-5 h-5" /> Student Leaves {teacherLeaves.filter(l => l.status === 'pending').length > 0 && <span className="bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center animate-bounce">{teacherLeaves.filter(l => l.status === 'pending').length}</span>}
+                    </button>
                     <button onClick={() => setView('reports')} className="w-full sm:w-auto bg-blue-100 text-blue-800 font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-200">
                         <BarChartIcon className="w-5 h-5" /> Go to Master Register
                     </button>
@@ -298,6 +338,79 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
                             >
                                 {isSavingManual ? 'Saving...' : 'Save Manual Attendance'}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Leave Management Modal */}
+            {showLeaves && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
+                    <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-floatUp">
+                        <div className="p-6 bg-gradient-to-r from-[#052659] to-[#0A3A7E] text-white flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                                    <CalendarDaysIcon className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold">Student Leave Requests</h3>
+                                    <p className="text-xs text-blue-200 opacity-80">Manage leaves for your class students</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowLeaves(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><XIcon className="w-6 h-6" /></button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
+                            {isLeavesLoading ? (
+                                <div className="flex flex-col items-center justify-center py-20">
+                                    <div className="w-12 h-12 border-4 border-[#052659] border-t-transparent rounded-full animate-spin mb-4"></div>
+                                    <p className="text-slate-500 font-medium">Fetching requests...</p>
+                                </div>
+                            ) : teacherLeaves.length === 0 ? (
+                                <div className="text-center py-20">
+                                    <div className="w-16 h-16 bg-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-400">
+                                        <CalendarDaysIcon className="w-8 h-8" />
+                                    </div>
+                                    <p className="text-slate-500 font-bold text-lg">No Leave Requests Found</p>
+                                    <p className="text-slate-400 text-sm mt-1">Requests from your students will appear here.</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 gap-4">
+                                    {teacherLeaves.map(leave => (
+                                        <div key={leave.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:shadow-md hover:border-blue-200">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h4 className="font-bold text-slate-800 text-lg">{leave.student_name}</h4>
+                                                    <span className="text-xs font-mono text-slate-400">({leave.roll_number})</span>
+                                                </div>
+                                                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600 mb-2">
+                                                    <span className="flex items-center gap-1"><CalendarIcon className="w-4 h-4 text-[#052659]" /> {new Date(leave.start_date).toLocaleDateString()} — {new Date(leave.end_date).toLocaleDateString()}</span>
+                                                </div>
+                                                <div className="bg-slate-50 p-3 rounded-xl text-sm text-slate-700 italic border-l-4 border-slate-300">
+                                                    "{leave.reason}"
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex flex-row md:flex-col gap-2 min-w-[120px]">
+                                                {leave.status === 'pending' ? (
+                                                    <>
+                                                        <button onClick={() => handleUpdateLeaveStatus(leave.id, 'approved')} className="flex-1 bg-green-50 text-green-700 font-bold py-2 px-4 rounded-xl hover:bg-green-100 flex items-center justify-center gap-2 transition-all">
+                                                            <CheckIcon className="w-4 h-4" /> Approve
+                                                        </button>
+                                                        <button onClick={() => handleUpdateLeaveStatus(leave.id, 'rejected')} className="flex-1 bg-red-50 text-red-700 font-bold py-2 px-4 rounded-xl hover:bg-red-100 flex items-center justify-center gap-2 transition-all">
+                                                            <XIcon className="w-4 h-4" /> Reject
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <div className={`text-center py-2 px-4 rounded-xl font-bold text-xs uppercase tracking-widest ${leave.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                        {leave.status}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
