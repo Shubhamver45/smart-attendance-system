@@ -466,7 +466,8 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
             } else {
                 showToast('Failed to reset password', 'error');
             }
-        } catch (err) {
+        } catch (error) {
+            console.error('Password reset error:', error);
             showToast('Network error', 'error');
         }
     };
@@ -496,7 +497,6 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
     };
 
     // Derived Analytics & Charts
-    const totalLectures = data.lectures.filter(l => l.status === 'active').length + data.lectures.filter(l => l.status === 'archived').length || 1;
     
     const gradient = (ctx, colorStart, colorEnd) => {
         const g = ctx.createLinearGradient(0, 0, 0, 400);
