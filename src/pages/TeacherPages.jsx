@@ -9,6 +9,7 @@ import {
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { io } from 'socket.io-client';
 
 // Define the API_URL at the top of the file to be used by all components
 const API_URL = "https://attendence-backend-tfw2.onrender.com/api";
@@ -81,7 +82,6 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
 
         const fetchLiveAttendance = async () => {
             try {
-                // THIS IS THE FIX: Use the API_URL variable
                 const res = await fetch(`${API_URL}/teacher/lectures/${activeLecture.id}/attendance`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -93,12 +93,28 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
         };
 
         fetchLiveAttendance();
-        const pollInterval = setInterval(fetchLiveAttendance, 5000);
+
+        // Phase 2: Live Real-Time WebSockets
+        const backendUrl = API_URL.replace('/api', '');
+        const socket = io(backendUrl, { transports: ['websocket', 'polling'] });
+        
+        socket.on('connect', () => {
+            console.log('🔗 WebSocket Connected');
+            socket.emit('join_teacher_room', user.id);
+        });
+
+        socket.on('attendance_marked', (data) => {
+            if (data.lectureId === activeLecture.id) {
+                console.log('Live update received:', data);
+                fetchLiveAttendance(); // Refresh list to get student details
+            }
+        });
+
         const countdownInterval = setInterval(() => {
             setCountdown(prev => {
                 if (prev <= 1) {
                     clearInterval(countdownInterval);
-                    clearInterval(pollInterval);
+                    socket.disconnect();
                     setActiveLecture(null);
                     return 0;
                 }
@@ -106,8 +122,11 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
             });
         }, 1000);
 
-        return () => { clearInterval(pollInterval); clearInterval(countdownInterval); };
-    }, [activeLecture, token, setActiveLecture]);
+        return () => { 
+            socket.disconnect(); 
+            clearInterval(countdownInterval); 
+        };
+    }, [activeLecture, token, setActiveLecture, user.id]);
 
     const handleDownloadLectureReport = async (lecture) => {
         try {
