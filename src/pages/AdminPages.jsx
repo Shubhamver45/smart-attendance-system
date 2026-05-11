@@ -567,7 +567,7 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
                 </div>
 
                 <div className="flex bg-white/60 backdrop-blur-md p-1.5 rounded-2xl shadow-sm border border-white/50 overflow-x-auto">
-                    {['overview', 'analytics', 'users', 'lectures', 'attendance'].map(tab => (
+                    {['overview', 'analytics', 'users', 'lectures', 'attendance', 'leaves'].map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)}
                             className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap ${activeTab === tab
                                 ? 'bg-[#052659] text-white shadow-lg shadow-[#052659]/30 scale-105'
