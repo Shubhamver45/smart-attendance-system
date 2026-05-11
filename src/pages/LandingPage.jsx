@@ -27,7 +27,6 @@ export const LandingPage = ({ setView }) => {
     <>
       {/* This container is a flex column to ensure the footer is pushed down */}
       <div className="w-full text-gray-800 flex flex-col min-h-screen">
-      <div className="w-full text-gray-800 flex flex-col min-h-screen">
         {/* 'flex-grow' pushes the footer down, 'pt-12' adds space for the header */}
         <main className="flex flex-col items-center justify-center flex-grow p-4 pt-12 hero-glow">
           <div className="text-center mb-12 text-[#021024] dark:text-white">
