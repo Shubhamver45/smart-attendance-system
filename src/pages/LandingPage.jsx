@@ -27,20 +27,9 @@ export const LandingPage = ({ setView }) => {
     <>
       {/* This container is a flex column to ensure the footer is pushed down */}
       <div className="w-full text-gray-800 flex flex-col min-h-screen">
-        <header className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center text-[#021024] z-10">
-          <div className="flex items-center gap-3">
-            <BookOpenIcon className="w-8 h-8" />
-            <h1 className="text-2xl font-bold">AttendanceHub</h1>
-          </div>
-          {/* Nav is hidden on mobile, visible on medium screens and up */}
-          <nav className="hidden md:flex items-center gap-8 text-lg">
-            <button onClick={() => setShowFeaturesModal(true)} className="hover:underline font-semibold">Features</button>
-            <button onClick={() => setShowAboutModal(true)} className="hover:underline font-semibold">About</button>
-          </nav>
-        </header>
-
-        {/* 'flex-grow' pushes the footer down, 'pt-24' adds space for the header */}
-        <main className="flex flex-col items-center justify-center flex-grow p-4 pt-24 hero-glow">
+      <div className="w-full text-gray-800 flex flex-col min-h-screen">
+        {/* 'flex-grow' pushes the footer down, 'pt-12' adds space for the header */}
+        <main className="flex flex-col items-center justify-center flex-grow p-4 pt-12 hero-glow">
           <div className="text-center mb-12 text-[#021024] dark:text-white">
             <h2 className="text-4xl md:text-6xl font-black mb-4 tracking-tight">Smart Attendance System</h2>
             <p className="text-lg md:text-xl text-[#052659] dark:text-sky-400 font-medium">Enterprise Grade. Real-time. Secure.</p>

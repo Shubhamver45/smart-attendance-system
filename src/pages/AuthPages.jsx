@@ -28,11 +28,6 @@ const AuthFormContainer = ({ children, title, subtitle, icon }) => (
 // Reusable component for the page layout with a back button
 const AuthPageWrapper = ({ setView, children }) => (
     <div className="w-full flex flex-col items-center justify-center min-h-screen p-4">
-        <header className="absolute top-0 left-0 p-6 text-[#021024]">
-            <button onClick={() => setView('landing')} className="flex items-center gap-2 text-lg hover:underline font-semibold">
-                <ArrowLeftIcon /> Back to Home
-            </button>
-        </header>
         <main className="w-full flex justify-center py-12">{children}</main>
     </div>
 );
