@@ -70,5 +70,17 @@ export default defineConfig({
   ],
   server: {
     port: 5173
+  },
+  build: {
+    chunkSizeWarningLimit: 2000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-ui': ['react', 'react-dom'],
+          'vendor-ai': ['face-api.js'],
+          'vendor-utils': ['jspdf', 'jspdf-autotable', 'xlsx']
+        }
+      }
+    }
   }
 })
