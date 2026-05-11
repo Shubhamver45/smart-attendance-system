@@ -26,7 +26,7 @@ export const LandingPage = ({ setView }) => {
   return (
     <>
       {/* This container is a flex column to ensure the footer is pushed down */}
-      <div className="w-full text-gray-800 flex flex-col min-h-screen">
+      <div className="w-full flex flex-col min-h-screen">
         {/* 'flex-grow' pushes the footer down, 'pt-12' adds space for the header */}
         <main className="flex flex-col items-center justify-center flex-grow p-4 pt-12 hero-glow">
           <div className="text-center mb-12 text-[#021024] dark:text-white">
@@ -76,7 +76,7 @@ export const LandingPage = ({ setView }) => {
       </Modal>
 
       <Modal isOpen={showFeaturesModal} onClose={() => setShowFeaturesModal(false)} title="Key Features">
-        <ul className="list-disc list-inside space-y-2 text-slate-600">
+        <ul className="list-disc list-inside space-y-2 text-slate-600 dark:text-slate-400">
           <li><span className="font-semibold">Secure QR Code Scanning:</span> Students scan a unique, timed QR code to mark their attendance.</li>
           <li><span className="font-semibold">Role-Based Dashboards:</span> Separate, intuitive dashboards for teachers and students.</li>
           <li><span className="font-semibold">Real-time Tracking:</span> Teachers can see live updates as students mark their attendance.</li>
