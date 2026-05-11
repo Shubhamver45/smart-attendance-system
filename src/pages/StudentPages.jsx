@@ -10,7 +10,7 @@ const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' :
 const StatCard = ({ title, value, subtitle, color }) => {
     const colorClasses = { green: 'text-green-600', orange: 'text-orange-500', red: 'text-red-600' };
     return (
-        <div className="bg-white/80 p-6 rounded-2xl shadow-lg">
+        <div className="glass p-6 liquid-hover animate-fadeIn">
             <h3 className="font-semibold text-slate-500">{title}</h3>
             <p className={`text-4xl font-bold ${colorClasses[color]}`}>{value}</p>
             <p className="text-sm text-slate-400">{subtitle}</p>
@@ -111,7 +111,7 @@ export const StudentDashboard = ({ user, token, setView, lectures, attendanceRec
             )}
 
             {/* Phase 3: Gamification Header */}
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-white/80 p-4 rounded-2xl shadow-lg border-2 border-[#C1E8FF]">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 glass p-4 border-2 border-[#C1E8FF] animate-fadeIn">
                 <div className="flex items-center gap-4">
                     <div className="text-4xl">🔥</div>
                     <div>
@@ -128,13 +128,13 @@ export const StudentDashboard = ({ user, token, setView, lectures, attendanceRec
 
             {/* UPDATED: Grid is now 3 columns, "Late" card is removed */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white/80 p-6 rounded-2xl shadow-lg"><h3 className="font-semibold text-slate-500 mb-2">Attendance Rate</h3><p className="text-3xl font-bold text-[#052659]">{attendanceRate}%</p><div className="w-full bg-slate-200 rounded-full h-2.5 mt-2"><div className="bg-[#5483B3] h-2.5 rounded-full" style={{ width: `${attendanceRate}%` }}></div></div><p className="text-sm text-slate-400 mt-1">{presentCount} of {lectures.length} classes</p></div>
+                <div className="glass p-6 liquid-hover animate-fadeIn"><h3 className="font-semibold text-slate-500 mb-2">Attendance Rate</h3><p className="text-3xl font-bold text-[#052659]">{attendanceRate}%</p><div className="w-full bg-slate-200 rounded-full h-2.5 mt-2"><div className="bg-[#5483B3] h-2.5 rounded-full" style={{ width: `${attendanceRate}%` }}></div></div><p className="text-sm text-slate-400 mt-1">{presentCount} of {lectures.length} classes</p></div>
                 <StatCard title="Present" value={presentCount} subtitle="On time" color="green" />
                 <StatCard title="Absent" value={finalAbsentCount} subtitle="Missed classes" color="red" />
             </div>
 
             {/* Phase 2: Leave Management Section */}
-            <div className="bg-white/80 p-6 rounded-2xl shadow-lg mb-8">
+            <div className="glass p-6 animate-fadeIn mb-8">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-bold">Leave Management</h3>
                     <button onClick={() => setShowLeaveModal(true)} className="bg-orange-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors">

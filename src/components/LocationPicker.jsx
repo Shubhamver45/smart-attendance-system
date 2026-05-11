@@ -114,7 +114,7 @@ export const LocationPicker = ({ location, radius, onLocationChange, onRadiusCha
                         id="radius"
                         min="10"
                         max="5000"
-                        step="10"
+                        step="1"
                         value={radius}
                         onChange={(e) => onRadiusChange(parseInt(e.target.value) || 50)}
                         className="flex-1 p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5483B3] focus:border-transparent"

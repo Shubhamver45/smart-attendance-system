@@ -177,7 +177,7 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
                     </div>
                 </div>
             ) : (
-                <div className="text-center bg-white/80 rounded-2xl p-8 md:p-12 mb-8">
+                <div className="text-center glass p-8 md:p-12 mb-8 animate-fadeIn">
                     <h2 className="text-2xl font-bold">No Active Lecture</h2>
                     <p className="text-slate-500 mt-2">Select a lecture from the list below.</p>
                 </div>
@@ -201,7 +201,7 @@ export const TeacherDashboard = ({ user, setView, lectures, activeLecture, setAc
             {lectures.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {lectures.map(lecture => (
-                        <div key={lecture.id} className={`bg-white/80 p-6 rounded-2xl shadow-lg flex flex-col justify-between border-2 ${activeLecture?.id === lecture.id ? 'border-green-500' : 'border-transparent'}`}>
+                        <div key={lecture.id} className={`glass p-6 flex flex-col justify-between border-2 liquid-hover ${activeLecture?.id === lecture.id ? 'border-green-500' : 'border-transparent'}`}>
                             <div>
                                 <div className="flex items-start justify-between mb-2">
                                     <h3 className="font-bold text-xl">{lecture.name}</h3>
@@ -647,18 +647,19 @@ export const CreateLecturePage = ({ setView, addLecture, setActiveLecture }) => 
     return (
         <main className="p-4 md:p-8 flex flex-col items-center">
             {qrImageUrl ? (
-                <div className="w-full max-w-md bg-white/80 p-8 rounded-2xl shadow-lg text-center">
+                <div className="w-full max-w-md glass p-8 text-center animate-fadeIn">
                     <h2 className="text-2xl font-bold mb-2">QR Code Generated!</h2><p className="text-slate-500 mb-6">Students can scan this with their phone camera.</p>
                     <img src={qrImageUrl} alt="Generated QR Code" className="mx-auto rounded-lg shadow-md" />
                     {/* UPDATED: Show the new details */}
-                    <div className="mt-6 text-left bg-slate-50 p-4 rounded-lg">
-                        <h3 className="font-bold text-lg">{lectureDetails.subject}</h3>
+                    <div className="mt-6 text-left bg-blue-50 p-4 rounded-xl border border-blue-100">
+                        <h3 className="font-bold text-lg text-[#052659]">{lectureDetails.subject}</h3>
                         <p className="text-sm text-slate-500">{lectureDetails.date} at {lectureDetails.time}</p>
+                        <p className="text-xs text-blue-700 mt-2 font-medium">✨ Radius auto-optimized to <strong>{createdLecture.radius}m</strong> to ensure laptop accuracy doesn't block students.</p>
                     </div>
                     <button onClick={handleActivateAndReturn} className="mt-6 w-full bg-green-500 text-white font-bold py-3 rounded-lg hover:bg-green-600">Activate and Return</button>
                 </div>
             ) : (
-                <div className="w-full max-w-2xl bg-white/80 p-8 rounded-2xl shadow-lg">
+                <div className="w-full max-w-2xl glass p-8 animate-fadeIn">
                     <h2 className="text-3xl font-bold text-center mb-6">Create New Lecture</h2>
                     {/* UPDATED: The form now matches your request */}
                     <form className="space-y-4" onSubmit={handleGenerateQr}>

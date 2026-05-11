@@ -12,14 +12,14 @@ const API_URL = "https://attendence-backend-tfw2.onrender.com/api";
 // STYLES & ANIMATIONS
 // ═══════════════════════════════════════════════════════════
 
-const CARD = "bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-white/60 transition-all duration-500 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 relative overflow-hidden";
+const CARD = "glass liquid-hover relative overflow-hidden animate-fadeIn";
 const CARD_HEADER_STYLE = "flex items-center justify-between mb-6 relative z-10 px-6 pt-6";
 const TITLE = "text-lg font-bold text-[#021024] tracking-tight";
 const SUBTITLE = "text-xs font-semibold text-[#5483B3] uppercase tracking-wider mt-0.5";
 const BADGE = (color) => `px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide ${color} shadow-sm`;
 const BTN_PRIMARY = "flex items-center gap-2 px-4 py-2 bg-[#052659] text-white rounded-xl hover:bg-[#021024] transition-all text-xs font-bold uppercase tracking-wide shadow-md hover:shadow-lg hover:-translate-y-0.5";
 const BTN_SECONDARY = "flex items-center gap-2 px-4 py-2 bg-[#C1E8FF] text-[#052659] rounded-xl hover:bg-[#7DA0CA] hover:text-white transition-all text-xs font-bold uppercase tracking-wide shadow-sm";
-const INPUT = "flex-1 w-full px-4 py-2.5 rounded-xl border border-[#C1E8FF] text-sm outline-none focus:ring-2 focus:ring-[#052659]/30 bg-white/80 backdrop-blur-sm placeholder-[#7DA0CA] transition-all focus:border-[#052659]";
+const INPUT = "flex-1 w-full px-4 py-2.5 rounded-xl border border-[#C1E8FF] text-sm outline-none focus:ring-2 focus:ring-[#052659]/30 bg-white backdrop-blur-sm placeholder-[#7DA0CA] transition-all focus:border-[#052659]";
 const TABLE_HEADER = "bg-gradient-to-r from-[#052659] to-[#0A3A7E] text-white text-xs uppercase tracking-wider";
 
 // Animation Config

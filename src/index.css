@@ -1,7 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.4);
+    --primary: #052659;
+    --accent: #5483B3;
+    --liquid-gradient: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+}
+
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Outfit', sans-serif;
     margin: 0;
     padding: 0;
+    background: var(--liquid-gradient);
+    min-height: 100vh;
+    color: #021024;
+}
+
+/* Liquid Glass Utility */
+.glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+}
+
+.glass-dark {
+    background: rgba(5, 38, 89, 0.05);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(5, 38, 89, 0.1);
+    border-radius: 16px;
+}
+
+/* Hover effects for liquid feel */
+.liquid-hover {
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.liquid-hover:hover {
+    transform: translateY(-5px) scale(1.01);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* Custom Scrollbar for premium feel */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(5, 38, 89, 0.2);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(5, 38, 89, 0.4);
 }
 
 /* Fade in animation */
@@ -17,26 +75,21 @@ body {
 }
 
 .animate-fadeIn {
-    animation: fadeIn 0.4s ease-in-out;
-}
-
-/* Fade in up animation */
-@keyframes fadeInUp {
-    from { 
-        opacity: 0; 
-        transform: scale(0.95) translateY(20px); 
-    }
-    to { 
-        opacity: 1; 
-        transform: scale(1) translateY(0); 
-    }
-}
-
-.animate-fadeInUp {
-    animation: fadeInUp 0.3s ease-out;
+    animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* QR Scanner border fix */
 #reader div[style*="border-color: rgb(255, 255, 255)"] {
-    border-color: #052659 !important;
+    border-color: var(--primary) !important;
+}
+
+/* Input styling override */
+input, select, textarea {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(5, 38, 89, 0.1) !important;
+}
+
+input:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 4px rgba(84, 131, 179, 0.1) !important;
 }
