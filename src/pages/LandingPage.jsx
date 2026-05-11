@@ -12,7 +12,7 @@ const RoleCard = ({ icon, title, description, buttonText, onClick, isPrimary }) 
     <p className="text-slate-600 dark:text-slate-400 mb-6 flex-grow">{description}</p>
     <button
       onClick={onClick}
-      className={`w-full py-3 rounded-lg font-semibold text-lg transition-all duration-300 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] ${isPrimary ? 'bg-[#052659] text-white hover:bg-[#021024] dark:bg-sky-500 dark:text-slate-900' : 'bg-[#7DA0CA] text-[#021024] hover:bg-[#5483B3] dark:bg-slate-700 dark:text-white'}`}
+      className={`w-full py-3 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] btn-primary shadow-xl`}
     >
       {buttonText}
     </button>
