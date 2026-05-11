@@ -59,9 +59,9 @@ export const Navbar = ({ user, setView, onLogout, isDarkMode, setIsDarkMode }) =
                         </button>
                     )
                 })}
-                <button onClick={() => setIsDarkMode(!isDarkMode)} className="font-semibold flex items-center gap-2 p-2 px-4 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shadow-sm">
+                <button onClick={() => setIsDarkMode(!isDarkMode)} className="font-semibold flex items-center gap-2 p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
                     <span className="text-xl">{isDarkMode ? '☀️' : '🌙'}</span>
-                    <span className="hidden md:inline font-bold uppercase tracking-wider text-xs">{isDarkMode ? 'Light' : 'Dark'}</span>
+                    <span className="hidden md:inline">{isDarkMode ? 'Mode' : 'Mode'}</span>
                 </button>
                 {user && (
                     <button onClick={onLogout} className="font-semibold flex items-center gap-2 p-2 rounded-lg text-red-600 hover:bg-red-100 transition-colors">

@@ -12,7 +12,7 @@ const RoleCard = ({ icon, title, description, buttonText, onClick, isPrimary }) 
     <p className="text-slate-600 dark:text-slate-400 mb-6 flex-grow">{description}</p>
     <button
       onClick={onClick}
-      className={`w-full py-3 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] btn-primary shadow-xl`}
+      className={`w-full py-3 rounded-lg font-semibold text-lg transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg ${isPrimary ? 'bg-[#052659] text-white hover:bg-[#021024]' : 'bg-[#7DA0CA] text-[#021024] hover:bg-[#5483B3]'}`}
     >
       {buttonText}
     </button>
@@ -28,10 +28,10 @@ export const LandingPage = ({ setView }) => {
       {/* This container is a flex column to ensure the footer is pushed down */}
       <div className="w-full flex flex-col min-h-screen">
         {/* 'flex-grow' pushes the footer down, 'pt-12' adds space for the header */}
-        <main className="flex flex-col items-center justify-center flex-grow p-4 pt-12 hero-glow">
-          <div className="text-center mb-12 text-[#021024] dark:text-white">
-            <h2 className="text-4xl md:text-6xl font-black mb-4 tracking-tight">Smart Attendance System</h2>
-            <p className="text-lg md:text-xl text-[#052659] dark:text-sky-400 font-medium">Enterprise Grade. Real-time. Secure.</p>
+        <main className="flex flex-col items-center justify-center flex-grow p-4 pt-12">
+          <div className="text-center mb-12 text-[#021024]">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">Smart Attendance System</h2>
+            <p className="text-lg md:text-xl text-[#052659]">Select your role to get started</p>
           </div>
           {/* This grid stacks to 1 column on mobile and is 2 columns on desktop */}
           <div className="grid md:grid-cols-3 gap-8 w-full max-w-5xl">
