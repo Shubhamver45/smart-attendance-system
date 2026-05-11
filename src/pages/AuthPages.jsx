@@ -42,23 +42,24 @@ const AuthPageWrapper = ({ setView, children }) => (
 export const TeacherLoginPage = ({ setView, onLogin }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         if (e) e.preventDefault();
-        onLogin(email, password, 'teacher');
-    };
-
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter') handleLogin();
+        setIsSubmitting(true);
+        await onLogin(email, password, 'teacher');
+        setIsSubmitting(false);
     };
 
     return (
         <AuthPageWrapper setView={setView}>
             <AuthFormContainer icon={<UserIcon className="w-8 h-8" />} title="Teacher Login" subtitle="Sign in to your teacher account">
                 <form className="space-y-6" onSubmit={handleLogin}>
-                    <InputField autoFocus label="Email" type="email" id="email" placeholder="Enter your email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={handleKeyDown} />
-                    <InputField label="Password" type="password" id="password" placeholder="Enter your password" icon={<LockIcon className="w-5 h-5" />} value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={handleKeyDown} />
-                    <button type="submit" className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors">Sign In</button>
+                    <InputField autoFocus label="Email" type="email" id="email" placeholder="Enter your email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <InputField label="Password" type="password" id="password" placeholder="Enter your password" icon={<LockIcon className="w-5 h-5" />} value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <button type="submit" disabled={isSubmitting} className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors disabled:opacity-70 flex justify-center items-center gap-2">
+                        {isSubmitting ? <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Signing In...</> : 'Sign In'}
+                    </button>
                 </form>
                 <p className="text-center text-slate-600 mt-6">Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); setView('teacherRegister') }} className="font-semibold text-[#052659] hover:underline">Sign up</a></p>
             </AuthFormContainer>
@@ -68,11 +69,15 @@ export const TeacherLoginPage = ({ setView, onLogin }) => {
 
 export const TeacherRegisterPage = ({ setView, onRegister }) => {
     const [formData, setFormData] = useState({ id: '', name: '', email: '', password: '', role: 'teacher' });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const handleChange = (e) => setFormData({ ...formData, [e.target.id]: e.target.value });
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        onRegister(formData);
+        setIsSubmitting(true);
+        await onRegister(formData);
+        setIsSubmitting(false);
     };
 
     return (
@@ -83,7 +88,9 @@ export const TeacherRegisterPage = ({ setView, onRegister }) => {
                     <InputField id="email" label="Email" type="email" placeholder="Enter your email" icon={<MailIcon className="w-5 h-5" />} value={formData.email} onChange={handleChange} />
                     <InputField id="password" label="Password" type="password" placeholder="Create a password" icon={<LockIcon className="w-5 h-5" />} value={formData.password} onChange={handleChange} />
                     <InputField id="id" label="Employee ID" type="text" placeholder="e.g., mit1234" icon={<UserIcon className="w-5 h-5" />} value={formData.id} onChange={handleChange} />
-                    <button type="submit" className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors">Create Account</button>
+                    <button type="submit" disabled={isSubmitting} className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors disabled:opacity-70 flex justify-center items-center gap-2">
+                        {isSubmitting ? <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Creating...</> : 'Create Account'}
+                    </button>
                 </form>
                 <p className="text-center text-slate-600 mt-6">Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); setView('teacherLogin') }} className="font-semibold text-[#052659] hover:underline">Sign in here</a></p>
             </AuthFormContainer>
@@ -96,23 +103,24 @@ export const TeacherRegisterPage = ({ setView, onRegister }) => {
 export const StudentLoginPage = ({ setView, onLogin }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         if (e) e.preventDefault();
-        onLogin(email, password, 'student');
-    };
-
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter') handleLogin();
+        setIsSubmitting(true);
+        await onLogin(email, password, 'student');
+        setIsSubmitting(false);
     };
 
     return (
         <AuthPageWrapper setView={setView}>
             <AuthFormContainer icon={<GraduationCapIcon className="w-8 h-8" />} title="Student Login" subtitle="Sign in to your student account">
                 <form className="space-y-6" onSubmit={handleLogin}>
-                    <InputField autoFocus label="Email" type="email" id="email" placeholder="Enter your email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={handleKeyDown} />
-                    <InputField label="Password" type="password" id="password" placeholder="Enter your password" icon={<LockIcon className="w-5 h-5" />} value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={handleKeyDown} />
-                    <button type="submit" className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors">Sign In</button>
+                    <InputField autoFocus label="Email" type="email" id="email" placeholder="Enter your email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <InputField label="Password" type="password" id="password" placeholder="Enter your password" icon={<LockIcon className="w-5 h-5" />} value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <button type="submit" disabled={isSubmitting} className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors disabled:opacity-70 flex justify-center items-center gap-2">
+                        {isSubmitting ? <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Signing In...</> : 'Sign In'}
+                    </button>
                 </form>
                 <p className="text-center text-slate-600 mt-6">Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); setView('studentRegister') }} className="font-semibold text-[#052659] hover:underline">Sign up</a></p>
             </AuthFormContainer>
@@ -122,11 +130,15 @@ export const StudentLoginPage = ({ setView, onLogin }) => {
 
 export const StudentRegisterPage = ({ setView, onRegister }) => {
     const [formData, setFormData] = useState({ id: '', name: '', email: '', password: '', role: 'student', roll_number: '', enrollment_number: '', subject_teacher_email: '', parents_email: '', mentor_email: '' });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const handleChange = (e) => setFormData({ ...formData, [e.target.id]: e.target.value });
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        onRegister(formData);
+        setIsSubmitting(true);
+        await onRegister(formData);
+        setIsSubmitting(false);
     };
 
     return (
@@ -148,7 +160,9 @@ export const StudentRegisterPage = ({ setView, onRegister }) => {
                             <InputField id="mentor_email" label="Mentor Email" type="email" placeholder="Your mentor's email" icon={<MailIcon className="w-5 h-5 text-slate-400" />} value={formData.mentor_email} onChange={handleChange} />
                         </div>
                     </div>
-                    <button type="submit" className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors">Create Account</button>
+                    <button type="submit" disabled={isSubmitting} className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors disabled:opacity-70 flex justify-center items-center gap-2">
+                        {isSubmitting ? <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Creating...</> : 'Create Account'}
+                    </button>
                 </form>
                 <p className="text-center text-slate-600 mt-6">Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); setView('studentLogin') }} className="font-semibold text-[#052659] hover:underline">Sign in here</a></p>
             </AuthFormContainer>
@@ -161,23 +175,24 @@ export const StudentRegisterPage = ({ setView, onRegister }) => {
 export const AdminLoginPage = ({ setView, onLogin }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         if (e) e.preventDefault();
-        onLogin(email, password, 'admin');
-    };
-
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter') handleLogin();
+        setIsSubmitting(true);
+        await onLogin(email, password, 'admin');
+        setIsSubmitting(false);
     };
 
     return (
         <AuthPageWrapper setView={setView}>
             <AuthFormContainer icon={<ShieldIcon className="w-8 h-8" />} title="Admin Login" subtitle="Sign in to the admin panel">
                 <form className="space-y-6" onSubmit={handleLogin}>
-                    <InputField autoFocus label="Email" type="email" id="admin-email" placeholder="Enter admin email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={handleKeyDown} />
-                    <InputField label="Password" type="password" id="admin-password" placeholder="Enter admin password" icon={<LockIcon className="w-5 h-5" />} value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={handleKeyDown} />
-                    <button type="submit" className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors">Sign In as Admin</button>
+                    <InputField autoFocus label="Email" type="email" id="admin-email" placeholder="Enter admin email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <InputField label="Password" type="password" id="admin-password" placeholder="Enter admin password" icon={<LockIcon className="w-5 h-5" />} value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <button type="submit" disabled={isSubmitting} className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors disabled:opacity-70 flex justify-center items-center gap-2">
+                        {isSubmitting ? <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Signing In...</> : 'Sign In as Admin'}
+                    </button>
                 </form>
                 <p className="text-center text-slate-500 mt-6 text-sm">Admin access is restricted. Contact system administrator for credentials.</p>
             </AuthFormContainer>

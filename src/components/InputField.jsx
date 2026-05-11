@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { EyeIcon } from './Icons';
 
-export const InputField = ({ id, label, type, placeholder, icon, value, onChange, autoFocus, onKeyDown }) => {
+export const InputField = ({ id, label, type, placeholder, icon, value, onChange, autoFocus }) => {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     return (
         <div>
@@ -16,7 +16,6 @@ export const InputField = ({ id, label, type, placeholder, icon, value, onChange
                     placeholder={placeholder} 
                     value={value} 
                     onChange={onChange}
-                    onKeyDown={onKeyDown}
                     required 
                     className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5483B3] transition-all"
                 />
