@@ -44,16 +44,20 @@ export const TeacherLoginPage = ({ setView, onLogin }) => {
     const [password, setPassword] = useState('');
 
     const handleLogin = (e) => {
-        e.preventDefault();
-        onLogin(email, password, 'teacher'); // Passes the role to App.jsx
+        if (e) e.preventDefault();
+        onLogin(email, password, 'teacher');
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') handleLogin();
     };
 
     return (
         <AuthPageWrapper setView={setView}>
             <AuthFormContainer icon={<UserIcon className="w-8 h-8" />} title="Teacher Login" subtitle="Sign in to your teacher account">
                 <form className="space-y-6" onSubmit={handleLogin}>
-                    <InputField autoFocus label="Email" type="email" id="email" placeholder="Enter your email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} />
-                    <InputField label="Password" type="password" id="password" placeholder="Enter your password" icon={<LockIcon className="w-5 h-5" />} value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <InputField autoFocus label="Email" type="email" id="email" placeholder="Enter your email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={handleKeyDown} />
+                    <InputField label="Password" type="password" id="password" placeholder="Enter your password" icon={<LockIcon className="w-5 h-5" />} value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={handleKeyDown} />
                     <button type="submit" className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors">Sign In</button>
                 </form>
                 <p className="text-center text-slate-600 mt-6">Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); setView('teacherRegister') }} className="font-semibold text-[#052659] hover:underline">Sign up</a></p>
@@ -94,16 +98,20 @@ export const StudentLoginPage = ({ setView, onLogin }) => {
     const [password, setPassword] = useState('');
 
     const handleLogin = (e) => {
-        e.preventDefault();
-        onLogin(email, password, 'student'); // Passes the role to App.jsx
+        if (e) e.preventDefault();
+        onLogin(email, password, 'student');
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') handleLogin();
     };
 
     return (
         <AuthPageWrapper setView={setView}>
             <AuthFormContainer icon={<GraduationCapIcon className="w-8 h-8" />} title="Student Login" subtitle="Sign in to your student account">
                 <form className="space-y-6" onSubmit={handleLogin}>
-                    <InputField autoFocus label="Email" type="email" id="email" placeholder="Enter your email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} />
-                    <InputField label="Password" type="password" id="password" placeholder="Enter your password" icon={<LockIcon className="w-5 h-5" />} value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <InputField autoFocus label="Email" type="email" id="email" placeholder="Enter your email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={handleKeyDown} />
+                    <InputField label="Password" type="password" id="password" placeholder="Enter your password" icon={<LockIcon className="w-5 h-5" />} value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={handleKeyDown} />
                     <button type="submit" className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors">Sign In</button>
                 </form>
                 <p className="text-center text-slate-600 mt-6">Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); setView('studentRegister') }} className="font-semibold text-[#052659] hover:underline">Sign up</a></p>
@@ -155,16 +163,20 @@ export const AdminLoginPage = ({ setView, onLogin }) => {
     const [password, setPassword] = useState('');
 
     const handleLogin = (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         onLogin(email, password, 'admin');
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') handleLogin();
     };
 
     return (
         <AuthPageWrapper setView={setView}>
             <AuthFormContainer icon={<ShieldIcon className="w-8 h-8" />} title="Admin Login" subtitle="Sign in to the admin panel">
                 <form className="space-y-6" onSubmit={handleLogin}>
-                    <InputField autoFocus label="Email" type="email" id="admin-email" placeholder="Enter admin email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} />
-                    <InputField label="Password" type="password" id="admin-password" placeholder="Enter admin password" icon={<LockIcon className="w-5 h-5" />} value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <InputField autoFocus label="Email" type="email" id="admin-email" placeholder="Enter admin email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={handleKeyDown} />
+                    <InputField label="Password" type="password" id="admin-password" placeholder="Enter admin password" icon={<LockIcon className="w-5 h-5" />} value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={handleKeyDown} />
                     <button type="submit" className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors">Sign In as Admin</button>
                 </form>
                 <p className="text-center text-slate-500 mt-6 text-sm">Admin access is restricted. Contact system administrator for credentials.</p>

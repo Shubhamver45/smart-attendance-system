@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { EyeIcon } from './Icons';
 
-export const InputField = ({ id, label, type, placeholder, icon, value, onChange, autoFocus }) => {
+export const InputField = ({ id, label, type, placeholder, icon, value, onChange, autoFocus, onKeyDown }) => {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     return (
         <div>
@@ -11,11 +11,13 @@ export const InputField = ({ id, label, type, placeholder, icon, value, onChange
                 <input
                     id={id} 
                     name={id} 
-                    autoFocus={autoFocus}                    type={isPasswordVisible ? 'text' : type}
+                    autoFocus={autoFocus}
+                    type={isPasswordVisible ? 'text' : type}
                     placeholder={placeholder} 
                     value={value} 
                     onChange={onChange}
-                    required // This attribute is added to ensure the field cannot be empty
+                    onKeyDown={onKeyDown}
+                    required 
                     className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#5483B3] transition-all"
                 />
                 {type === 'password' && (
