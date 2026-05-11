@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { InputField } from '../components/InputField.jsx';
 import { LocationPicker } from '../components/LocationPicker.jsx';
-import { BookOpenIcon, PlusIcon, QrCodeIcon, CalendarIcon, DownloadIcon, BarChartIcon, MapPinIcon, MailIcon, CalendarDaysIcon, CheckIcon, XIcon } from '../components/Icons.jsx';
+import { 
+    BookOpenIcon, PlusIcon, QrCodeIcon, CalendarIcon, 
+    DownloadIcon, BarChartIcon, MapPinIcon, MailIcon, 
+    CalendarDaysIcon, CheckIcon, XIcon 
+} from '../components/Icons.jsx';
 
 // Define the API_URL at the top of the file to be used by all components
 const API_URL = "https://attendence-backend-tfw2.onrender.com/api";
