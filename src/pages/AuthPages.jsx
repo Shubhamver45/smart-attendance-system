@@ -15,11 +15,11 @@ import { FaceCapture } from '../components/FaceCapture.jsx';
 // Reusable component for the form container
 // CORRECTED: Added responsive padding (p-6 for mobile, p-8 for desktop)
 const AuthFormContainer = ({ children, title, subtitle, icon }) => (
-    <div className="w-full max-w-md glass rounded-2xl p-6 md:p-8 space-y-6">
+    <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 md:p-8 space-y-6">
         <div className="text-center space-y-4">
-            <div className="inline-block bg-slate-100 dark:bg-slate-800 p-3 rounded-full text-[#052659] dark:text-sky-400">{icon}</div>
-            <h1 className="text-2xl font-bold text-[#021024] dark:text-white">{title}</h1>
-            {subtitle && <p className="text-slate-500 dark:text-slate-400">{subtitle}</p>}
+            <div className="inline-block bg-slate-100 p-3 rounded-full text-[#052659]">{icon}</div>
+            <h1 className="text-2xl font-bold text-[#021024]">{title}</h1>
+            {subtitle && <p className="text-slate-500">{subtitle}</p>}
         </div>
         {children}
     </div>

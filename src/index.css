@@ -55,9 +55,9 @@ input, select, textarea {
     border: 1px solid rgba(5, 38, 89, 0.1) !important;
 }
 
-/* --- DARK MODE OVERRIDES --- */
+/* --- DARK MODE --- */
 html.dark {
-    --glass-bg: rgba(15, 23, 42, 0.8);
+    --glass-bg: rgba(15, 23, 42, 0.9);
     --glass-border: rgba(148, 163, 184, 0.1);
     --primary: #94a3b8;
     --accent: #38bdf8;
@@ -71,26 +71,23 @@ html.dark body {
 
 html.dark header {
     background-color: var(--glass-bg) !important;
-    color: #f1f5f9 !important;
-}
-
-html.dark .bg-white, 
-html.dark .bg-slate-50 {
-    background-color: #1e293b !important;
 }
 
 html.dark h1, html.dark h2, html.dark h3 {
-    color: #f8fafc !important;
+    color: white !important;
 }
 
-html.dark p, html.dark span {
+html.dark p, html.dark span, html.dark button:not(.bg-\[\#052659\]) {
     color: #cbd5e1 !important;
+}
+
+html.dark .bg-white, html.dark .bg-slate-50 {
+    background-color: #1e293b !important;
 }
 
 html.dark input {
     background-color: #0f172a !important;
     color: white !important;
-    border-color: #334155 !important;
 }
 
 /* Phase 5 Polish */
