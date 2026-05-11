@@ -22,6 +22,7 @@ export default function App() {
     const [isLoading, setIsLoading] = useState(true);
     const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
     const [lectureNotification, setLectureNotification] = useState(null);
+    const [isDarkMode, setIsDarkMode] = useState(localStorage.getItem('theme') === 'dark');
 
     // --- EFFECT HOOKS ---
     useEffect(() => {
@@ -61,6 +62,16 @@ export default function App() {
             Notification.requestPermission().then(setNotificationPermission);
         }
     }, [user, notificationPermission]);
+
+    useEffect(() => {
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    }, [isDarkMode]);
 
     // --- DATA FETCHING LOGIC (COMPLETE) ---
     const fetchDataForUser = async (userData, userToken, lectureIdFromUrl = null) => {
@@ -285,7 +296,7 @@ export default function App() {
 
     return (
         <>
-            <Navbar user={user} setView={setView} onLogout={handleLogout} />
+            <Navbar user={user} setView={setView} onLogout={handleLogout} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
             <div key={view} className="animate-fadeIn">
                 {renderContent()}
             </div>

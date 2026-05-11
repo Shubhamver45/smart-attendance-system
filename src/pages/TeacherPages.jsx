@@ -6,6 +6,9 @@ import {
     DownloadIcon, BarChartIcon, MapPinIcon, MailIcon, 
     CalendarDaysIcon, CheckIcon, XIcon 
 } from '../components/Icons.jsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 // Define the API_URL at the top of the file to be used by all components
 const API_URL = "https://attendence-backend-tfw2.onrender.com/api";
@@ -497,24 +500,23 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
         fetchDefaulters();
     }, [teacherId, token]);
 
-    // Shared helper: build CSV from report data
-    const buildReportCSV = (students, lectures, records, reportLabel) => {
-        if (!lectures || lectures.length === 0) {
-            return null;
-        }
+    // Shared helper: build structured data for export
+    const getReportDataAndHeaders = (students, lectures, records) => {
+        if (!lectures || lectures.length === 0) return null;
+        
         const attendanceLookup = {};
         records.forEach(rec => {
             if (!attendanceLookup[rec.student_id]) attendanceLookup[rec.student_id] = new Set();
             attendanceLookup[rec.student_id].add(rec.lecture_id);
         });
 
-        // Header row with dates and subject names
+        // Headers
         const dateHeaders = lectures.map(l => {
             const d = new Date(l.date);
-            const dateStr = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-            return `"${dateStr}\\n${l.subject}"`;
-        }).join(',');
-        const headerRow = `Sr. No,Roll Number,Enrollment Number,Name,${dateHeaders},Total Present,Total Lectures,Percentage\n`;
+            return `${d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}\n${l.subject}`;
+        });
+        
+        const headers = ['Sr. No', 'Roll Number', 'Enrollment Number', 'Name', ...dateHeaders, 'Total Present', 'Total Lectures', 'Percentage'];
 
         const rows = students.map((student, index) => {
             const attendedSet = attendanceLookup[student.id] || new Set();
@@ -523,16 +525,46 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
                 const isPresent = attendedSet.has(lecture.id);
                 if (isPresent) attendedCount++;
                 return isPresent ? 'P' : 'A';
-            }).join(',');
+            });
             const pct = lectures.length > 0 ? ((attendedCount / lectures.length) * 100).toFixed(2) : '0.00';
-            return `${index + 1},${student.roll_number || 'N/A'},${student.enrollment_number || 'N/A'},"${student.name}",${statusCells},${attendedCount},${lectures.length},${pct}%`;
-        }).join('\n');
+            return [
+                index + 1,
+                student.roll_number || 'N/A',
+                student.enrollment_number || 'N/A',
+                student.name,
+                ...statusCells,
+                attendedCount,
+                lectures.length,
+                `${pct}%`
+            ];
+        });
 
-        return headerRow + rows;
+        return { headers, rows };
+    };
+
+    const downloadExcel = (data, fileName) => {
+        const worksheetData = [data.headers, ...data.rows];
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
+        XLSX.writeFile(workbook, `${fileName}.xlsx`);
+    };
+
+    const downloadPDF = (data, title, fileName) => {
+        const doc = new jsPDF('landscape');
+        doc.text(`Smart Attendance System - ${title}`, 14, 15);
+        autoTable(doc, {
+            head: [data.headers],
+            body: data.rows,
+            startY: 20,
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [41, 128, 185] },
+        });
+        doc.save(`${fileName}.pdf`);
     };
 
     // Download ALL TIME cumulative report
-    const handleDownloadCumulativeReport = async () => {
+    const handleDownloadCumulativeReport = async (format) => {
         setIsDownloadingCumulative(true);
         try {
             const res = await fetch(`${API_URL}/teacher/reports/cumulative/${teacherId}`, {
@@ -543,8 +575,11 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
                 alert('No lecture data found in the database. Create a lecture first.');
                 return;
             }
-            const csv = buildReportCSV(students, lectures, records, 'All Time');
-            if (csv) downloadCSV(csv, `master_attendance_ALL_TIME.csv`);
+            const data = getReportDataAndHeaders(students, lectures, records);
+            if (data) {
+                if (format === 'excel') downloadExcel(data, `master_attendance_ALL_TIME`);
+                if (format === 'pdf') downloadPDF(data, 'Cumulative Master Register (All Time)', `master_attendance_ALL_TIME`);
+            }
         } catch (error) {
             console.error('Failed to generate cumulative report:', error);
             alert('Error generating report. Please try again.');
@@ -554,7 +589,7 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
     };
 
     // Download MONTH-WISE report
-    const handleDownloadMonthlyReport = async () => {
+    const handleDownloadMonthlyReport = async (format) => {
         setIsDownloadingMonthly(true);
         try {
             const monthName = MONTHS.find(m => m.value === selectedMonth)?.label || selectedMonth;
@@ -567,8 +602,11 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
                 alert(`No lectures found for ${monthName} ${selectedYear}. Try a different month/year.`);
                 return;
             }
-            const csv = buildReportCSV(students, lectures, records, `${monthName} ${selectedYear}`);
-            if (csv) downloadCSV(csv, `attendance_${monthName}_${selectedYear}.csv`);
+            const data = getReportDataAndHeaders(students, lectures, records);
+            if (data) {
+                if (format === 'excel') downloadExcel(data, `attendance_${monthName}_${selectedYear}`);
+                if (format === 'pdf') downloadPDF(data, `${monthName} ${selectedYear} Attendance Register`, `attendance_${monthName}_${selectedYear}`);
+            }
         } catch (error) {
             console.error('Failed to generate monthly report:', error);
             alert('Error generating report. Please try again.');
@@ -600,13 +638,22 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
                             </p>
                         </div>
                     </div>
-                    <button
-                        onClick={handleDownloadCumulativeReport}
-                        disabled={isDownloadingCumulative}
-                        className="w-full md:w-auto bg-blue-600 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 shadow hover:bg-blue-700 transition-all disabled:opacity-60 disabled:cursor-wait"
-                    >
-                        {isDownloadingCumulative ? '⏳ Generating...' : <><DownloadIcon className="w-5 h-5" /> Download All-Time Excel</>}
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                        <button
+                            onClick={() => handleDownloadCumulativeReport('excel')}
+                            disabled={isDownloadingCumulative}
+                            className="flex-1 bg-green-600 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 shadow hover:bg-green-700 transition-all disabled:opacity-60 disabled:cursor-wait"
+                        >
+                            {isDownloadingCumulative ? '⏳...' : '📊 Excel'}
+                        </button>
+                        <button
+                            onClick={() => handleDownloadCumulativeReport('pdf')}
+                            disabled={isDownloadingCumulative}
+                            className="flex-1 bg-red-600 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 shadow hover:bg-red-700 transition-all disabled:opacity-60 disabled:cursor-wait"
+                        >
+                            {isDownloadingCumulative ? '⏳...' : '📄 PDF'}
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -644,13 +691,22 @@ export const AttendanceReportsPage = ({ teacherId, token, lectures, allStudents,
                             {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
                         </select>
                     </div>
-                    <button
-                        onClick={handleDownloadMonthlyReport}
-                        disabled={isDownloadingMonthly}
-                        className="w-full bg-green-600 text-white font-bold py-2.5 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-green-700 transition-all disabled:opacity-60 disabled:cursor-wait"
-                    >
-                        {isDownloadingMonthly ? '⏳ Generating...' : <><DownloadIcon className="w-5 h-5" /> Download Month Excel</>}
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-2 w-full">
+                        <button
+                            onClick={() => handleDownloadMonthlyReport('excel')}
+                            disabled={isDownloadingMonthly}
+                            className="flex-1 bg-green-600 text-white font-bold py-2.5 px-6 rounded-xl flex items-center justify-center gap-2 shadow hover:bg-green-700 transition-all disabled:opacity-60 disabled:cursor-wait"
+                        >
+                            {isDownloadingMonthly ? '⏳...' : '📊 Excel'}
+                        </button>
+                        <button
+                            onClick={() => handleDownloadMonthlyReport('pdf')}
+                            disabled={isDownloadingMonthly}
+                            className="flex-1 bg-red-600 text-white font-bold py-2.5 px-6 rounded-xl flex items-center justify-center gap-2 shadow hover:bg-red-700 transition-all disabled:opacity-60 disabled:cursor-wait"
+                        >
+                            {isDownloadingMonthly ? '⏳...' : '📄 PDF'}
+                        </button>
+                    </div>
                 </div>
             </div>
 

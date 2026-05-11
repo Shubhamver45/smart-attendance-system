@@ -2,7 +2,7 @@ import React from 'react';
 // CORRECTED: Added .jsx extension
 import { BookOpenIcon, LogOutIcon, BarChartIcon, CalendarDaysIcon, QrCodeIcon, ShieldIcon, UsersIcon, ActivityIcon, UserIcon } from './Icons.jsx';
 
-export const Navbar = ({ user, setView, onLogout }) => {
+export const Navbar = ({ user, setView, onLogout, isDarkMode, setIsDarkMode }) => {
     if (!user) return null;
 
     // UPDATED: Admin nav links
@@ -55,6 +55,9 @@ export const Navbar = ({ user, setView, onLogout }) => {
                         </button>
                     )
                 })}
+                <button onClick={() => setIsDarkMode(!isDarkMode)} className="font-semibold flex items-center gap-2 p-2 rounded-lg text-slate-600 hover:bg-slate-200 transition-colors">
+                    <span className="text-xl">{isDarkMode ? '☀️' : '🌙'}</span>
+                </button>
                 <button onClick={onLogout} className="font-semibold flex items-center gap-2 p-2 rounded-lg text-red-600 hover:bg-red-100 transition-colors">
                     <LogOutIcon className="w-5 h-5" />
                     <span className="hidden md:inline">Logout</span>
