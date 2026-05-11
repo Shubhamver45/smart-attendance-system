@@ -416,7 +416,7 @@ export const AdminDashboard = ({ user, token, setView, initialTab = 'overview' }
                 showToast(`Leave request ${status}`);
                 loadData();
             } else {
-                showToast(`Failed to ${status} leave`, 'error');
+                showToast(`Failed to ${status === 'approved' ? 'approve' : 'reject'} leave`, 'error');
             }
         } catch (e) { showToast('Error updating leave', 'error'); }
     };

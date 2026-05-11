@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { EyeIcon } from './Icons';
 
-export const InputField = ({ id, label, type, placeholder, icon, value, onChange }) => {
+export const InputField = ({ id, label, type, placeholder, icon, value, onChange, autoFocus }) => {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     return (
         <div>
@@ -11,7 +11,7 @@ export const InputField = ({ id, label, type, placeholder, icon, value, onChange
                 <input
                     id={id} 
                     name={id} 
-                    type={isPasswordVisible ? 'text' : type}
+                    autoFocus={autoFocus}                    type={isPasswordVisible ? 'text' : type}
                     placeholder={placeholder} 
                     value={value} 
                     onChange={onChange}

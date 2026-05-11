@@ -52,7 +52,7 @@ export const TeacherLoginPage = ({ setView, onLogin }) => {
         <AuthPageWrapper setView={setView}>
             <AuthFormContainer icon={<UserIcon className="w-8 h-8" />} title="Teacher Login" subtitle="Sign in to your teacher account">
                 <form className="space-y-6" onSubmit={handleLogin}>
-                    <InputField label="Email" type="email" id="email" placeholder="Enter your email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <InputField autoFocus label="Email" type="email" id="email" placeholder="Enter your email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} />
                     <InputField label="Password" type="password" id="password" placeholder="Enter your password" icon={<LockIcon className="w-5 h-5" />} value={password} onChange={(e) => setPassword(e.target.value)} />
                     <button type="submit" className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors">Sign In</button>
                 </form>
@@ -102,7 +102,7 @@ export const StudentLoginPage = ({ setView, onLogin }) => {
         <AuthPageWrapper setView={setView}>
             <AuthFormContainer icon={<GraduationCapIcon className="w-8 h-8" />} title="Student Login" subtitle="Sign in to your student account">
                 <form className="space-y-6" onSubmit={handleLogin}>
-                    <InputField label="Email" type="email" id="email" placeholder="Enter your email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <InputField autoFocus label="Email" type="email" id="email" placeholder="Enter your email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} />
                     <InputField label="Password" type="password" id="password" placeholder="Enter your password" icon={<LockIcon className="w-5 h-5" />} value={password} onChange={(e) => setPassword(e.target.value)} />
                     <button type="submit" className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors">Sign In</button>
                 </form>
@@ -163,7 +163,7 @@ export const AdminLoginPage = ({ setView, onLogin }) => {
         <AuthPageWrapper setView={setView}>
             <AuthFormContainer icon={<ShieldIcon className="w-8 h-8" />} title="Admin Login" subtitle="Sign in to the admin panel">
                 <form className="space-y-6" onSubmit={handleLogin}>
-                    <InputField label="Email" type="email" id="admin-email" placeholder="Enter admin email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <InputField autoFocus label="Email" type="email" id="admin-email" placeholder="Enter admin email" icon={<MailIcon className="w-5 h-5" />} value={email} onChange={(e) => setEmail(e.target.value)} />
                     <InputField label="Password" type="password" id="admin-password" placeholder="Enter admin password" icon={<LockIcon className="w-5 h-5" />} value={password} onChange={(e) => setPassword(e.target.value)} />
                     <button type="submit" className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors">Sign In as Admin</button>
                 </form>
