@@ -297,7 +297,7 @@ export default function App() {
     return (
         <>
             <Navbar user={user} setView={setView} onLogout={handleLogout} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
-            <div key={view} className="animate-fadeIn">
+            <div key={view} className="page-transition-enter-active">
                 {renderContent()}
             </div>
         </>

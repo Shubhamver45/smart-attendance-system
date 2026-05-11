@@ -26,6 +26,7 @@ export const StudentDashboard = ({ user, token, lectures, attendanceRecords, lec
 
     // Phase 2: Leave Management State
     const [leaves, setLeaves] = useState([]);
+    const [isLoadingLeaves, setIsLoadingLeaves] = useState(true);
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const [leaveForm, setLeaveForm] = useState({ start_date: '', end_date: '', reason: '' });
     const [isSubmittingLeave, setIsSubmittingLeave] = useState(false);
@@ -33,6 +34,7 @@ export const StudentDashboard = ({ user, token, lectures, attendanceRecords, lec
     useEffect(() => {
         const fetchLeaves = async () => {
             if (!user?.id || !token) return;
+            setIsLoadingLeaves(true);
             try {
                 const res = await fetch(`${API_URL}/student/leaves/${user.id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -40,6 +42,8 @@ export const StudentDashboard = ({ user, token, lectures, attendanceRecords, lec
                 if (res.ok) setLeaves(await res.json());
             } catch (error) {
                 console.error("Failed to fetch leaves", error);
+            } finally {
+                setIsLoadingLeaves(false);
             }
         };
         fetchLeaves();
@@ -143,10 +147,16 @@ export const StudentDashboard = ({ user, token, lectures, attendanceRecords, lec
                         Request Leave
                     </button>
                 </div>
-                {leaves.length > 0 ? (
+                {isLoadingLeaves ? (
+                    <div className="space-y-4">
+                        <div className="skeleton h-12 w-full"></div>
+                        <div className="skeleton h-12 w-full"></div>
+                        <div className="skeleton h-12 w-full"></div>
+                    </div>
+                ) : leaves.length > 0 ? (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
-                            <thead className="bg-slate-50 text-slate-500">
+                            <thead className="bg-slate-50 text-slate-500 dark:bg-slate-800">
                                 <tr>
                                     <th className="p-3 rounded-tl-lg">Date Range</th>
                                     <th className="p-3">Reason</th>
@@ -155,9 +165,9 @@ export const StudentDashboard = ({ user, token, lectures, attendanceRecords, lec
                             </thead>
                             <tbody>
                                 {leaves.map(leave => (
-                                    <tr key={leave.id} className="border-t border-slate-100">
+                                    <tr key={leave.id} className="border-t border-slate-100 dark:border-slate-700">
                                         <td className="p-3 font-semibold">{new Date(leave.start_date).toLocaleDateString()} - {new Date(leave.end_date).toLocaleDateString()}</td>
-                                        <td className="p-3 text-slate-600">{leave.reason}</td>
+                                        <td className="p-3 text-slate-600 dark:text-slate-400">{leave.reason}</td>
                                         <td className="p-3">
                                             <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                                                 leave.status === 'approved' ? 'bg-green-100 text-green-700' :
@@ -173,7 +183,7 @@ export const StudentDashboard = ({ user, token, lectures, attendanceRecords, lec
                         </table>
                     </div>
                 ) : (
-                    <p className="text-slate-500 text-center py-4 bg-slate-50 rounded-lg">No leave requests found.</p>
+                    <p className="text-slate-500 text-center py-4 bg-slate-50 rounded-lg dark:bg-slate-800">No leave requests found.</p>
                 )}
             </div>
 

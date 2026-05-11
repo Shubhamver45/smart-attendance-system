@@ -142,3 +142,70 @@ html.dark textarea {
 html.dark .bg-slate-50 {
     background-color: #0f172a !important;
 }
+
+/* --- Phase 5: Professional UI/UX Polish --- */
+
+/* Smooth Page Transitions */
+.page-transition-enter {
+    opacity: 0;
+    transform: translateY(10px);
+}
+.page-transition-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 400ms, transform 400ms;
+}
+
+/* Skeleton Loader Animation */
+@keyframes shimmer {
+    0% { background-position: -468px 0; }
+    100% { background-position: 468px 0; }
+}
+
+.skeleton {
+    background: #f6f7f8;
+    background-image: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+    background-repeat: no-repeat;
+    background-size: 800px 104px;
+    display: inline-block;
+    position: relative;
+    animation: shimmer 1.2s infinite linear forwards;
+    border-radius: 8px;
+}
+
+.dark .skeleton {
+    background: #1e293b;
+    background-image: linear-gradient(to right, #1e293b 0%, #334155 20%, #1e293b 40%, #1e293b 100%);
+}
+
+/* Scrollbar Enhancement */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(5, 38, 89, 0.2);
+    border-radius: 10px;
+}
+.dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Glow Effects */
+.hero-glow {
+    position: relative;
+}
+.hero-glow::before {
+    content: '';
+    position: absolute;
+    top: -10%;
+    left: -10%;
+    width: 120%;
+    height: 120%;
+    background: radial-gradient(circle, rgba(84, 131, 179, 0.1) 0%, transparent 70%);
+    z-index: -1;
+    pointer-events: none;
+}

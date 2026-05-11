@@ -6,13 +6,13 @@ import { UserIcon, GraduationCapIcon, BookOpenIcon, ShieldIcon } from '../compon
 
 // This is a sub-component used only by LandingPage
 const RoleCard = ({ icon, title, description, buttonText, onClick, isPrimary }) => (
-  <div className="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-lg text-center flex flex-col items-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 ease-in-out">
-    <div className="mb-4">{icon}</div>
-    <h3 className="text-2xl font-bold mb-2 text-[#021024]">{title}</h3>
-    <p className="text-slate-600 mb-6 flex-grow">{description}</p>
+  <div className="glass p-8 rounded-2xl text-center flex flex-col items-center liquid-hover transition-all duration-300">
+    <div className="mb-4 p-4 bg-slate-100 rounded-full dark:bg-slate-800">{icon}</div>
+    <h3 className="text-2xl font-bold mb-2 text-[#021024] dark:text-white">{title}</h3>
+    <p className="text-slate-600 dark:text-slate-400 mb-6 flex-grow">{description}</p>
     <button
       onClick={onClick}
-      className={`w-full py-3 rounded-lg font-semibold text-lg transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg ${isPrimary ? 'bg-[#052659] text-white hover:bg-[#021024]' : 'bg-[#7DA0CA] text-[#021024] hover:bg-[#5483B3]'}`}
+      className={`w-full py-3 rounded-lg font-semibold text-lg transition-all duration-300 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] ${isPrimary ? 'bg-[#052659] text-white hover:bg-[#021024] dark:bg-sky-500 dark:text-slate-900' : 'bg-[#7DA0CA] text-[#021024] hover:bg-[#5483B3] dark:bg-slate-700 dark:text-white'}`}
     >
       {buttonText}
     </button>
@@ -40,11 +40,10 @@ export const LandingPage = ({ setView }) => {
         </header>
 
         {/* 'flex-grow' pushes the footer down, 'pt-24' adds space for the header */}
-        <main className="flex flex-col items-center justify-center flex-grow p-4 pt-24">
-          <div className="text-center mb-12 text-[#021024]">
-            {/* Responsive text sizes */}
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Smart Attendance System</h2>
-            <p className="text-lg md:text-xl text-[#052659]">Select your role to get started</p>
+        <main className="flex flex-col items-center justify-center flex-grow p-4 pt-24 hero-glow">
+          <div className="text-center mb-12 text-[#021024] dark:text-white">
+            <h2 className="text-4xl md:text-6xl font-black mb-4 tracking-tight">Smart Attendance System</h2>
+            <p className="text-lg md:text-xl text-[#052659] dark:text-sky-400 font-medium">Enterprise Grade. Real-time. Secure.</p>
           </div>
           {/* This grid stacks to 1 column on mobile and is 2 columns on desktop */}
           <div className="grid md:grid-cols-3 gap-8 w-full max-w-5xl">
