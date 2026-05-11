@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode'; // Import the new scanner package
 import { CalendarIcon, MapPinIcon, QrCodeIcon, CalendarDaysIcon } from '../components/Icons.jsx';
 import { getCurrentLocation, formatDistance, calculateDistance } from '../utils/geolocation.js';
+import { FaceCapture } from '../components/FaceCapture.jsx';
+import * as faceapi from 'face-api.js';
 
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
 
@@ -233,45 +235,35 @@ export const ScanQRCodePage = ({ setView, markAttendance, lectures, token }) => 
     const [scanResult, setScanResult] = useState(null);
     const [isScanning, setIsScanning] = useState(true);
     const [locationStatus, setLocationStatus] = useState('');
+    const [showFaceAuth, setShowFaceAuth] = useState(false);
+    const [activeLectureId, setActiveLectureId] = useState(null);
+    const [geoInfo, setGeoInfo] = useState({ isGeofenced: false, distance: null, accuracy: null });
 
-    const verifyIdentityAndMarkAttendance = async (lectureId, isGeofenced = false, distance = null, accuracy = null) => {
+    const verifyFaceAndMarkAttendance = async (capturedEmbedding) => {
         try {
-            setScanResult('Verifying identity...');
-            setLocationStatus('Please confirm your identity using biometrics or PIN.');
-            
-            // Phase 4: Biometric / Local Device Authentication (Anti-Proxy)
-            if (window.PublicKeyCredential) {
-                const challenge = new Uint8Array(32);
-                window.crypto.getRandomValues(challenge);
-                
-                await navigator.credentials.create({
-                    publicKey: {
-                        challenge: challenge,
-                        rp: { name: "Smart Attendance System" },
-                        user: {
-                            id: new Uint8Array(16),
-                            name: "student",
-                            displayName: "Student"
-                        },
-                        pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
-                        authenticatorSelection: {
-                            authenticatorAttachment: "platform", // Forces TouchID/FaceID/Windows Hello
-                            userVerification: "required"
-                        },
-                        timeout: 60000
-                    }
-                });
-            } else {
-                console.warn('WebAuthn not supported on this device. Bypassing biometric check.');
+            setScanResult('Verifying face match...');
+            setShowFaceAuth(false);
+
+            if (!user.face_embedding) {
+                throw new Error("No biometric data found on file. Please re-register.");
             }
 
-            setScanResult(`Identity verified. Marking attendance...`);
-            setLocationStatus('Please wait...');
-            const success = await markAttendance(lectureId);
+            const storedDescriptor = new Float32Array(JSON.parse(user.face_embedding));
+            const capturedDescriptor = new Float32Array(JSON.parse(capturedEmbedding));
+
+            const distance = faceapi.euclideanDistance(storedDescriptor, capturedDescriptor);
+            
+            // Threshold for face match (0.6 is common for face-api.js)
+            if (distance > 0.6) {
+                throw new Error("Face verification failed. Identity could not be confirmed.");
+            }
+
+            setScanResult(`Face verified (score: ${Math.round((1 - distance) * 100)}%). Marking attendance...`);
+            const success = await markAttendance(activeLectureId);
             
             if (success) {
-                if (isGeofenced) {
-                    setScanResult(`✓ Attendance Marked Successfully!\n\nYou are ${formatDistance(distance)} from the lecture.\n(GPS Accuracy: ±${Math.round(accuracy)}m)`);
+                if (geoInfo.isGeofenced) {
+                    setScanResult(`✓ Attendance Marked Successfully!\n\nYou are ${formatDistance(geoInfo.distance)} from the lecture.\n(GPS Accuracy: ±${Math.round(geoInfo.accuracy)}m)`);
                 } else {
                     setScanResult('✓ Attendance Marked Successfully!');
                 }
@@ -281,11 +273,18 @@ export const ScanQRCodePage = ({ setView, markAttendance, lectures, token }) => 
                 setTimeout(() => setView('studentHome'), 3000);
             }
         } catch (error) {
-            console.error('Biometric verification failed:', error);
-            setScanResult('❌ Identity verification failed.');
-            setLocationStatus('Biometric check cancelled or failed.');
+            console.error('Verification failed:', error);
+            setScanResult(`❌ ${error.message}`);
             setTimeout(() => setView('studentHome'), 3000);
         }
+    };
+
+    const startIdentityVerification = (lectureId, isGeofenced = false, distance = null, accuracy = null) => {
+        setActiveLectureId(lectureId);
+        setGeoInfo({ isGeofenced, distance, accuracy });
+        setShowFaceAuth(true);
+        setScanResult('Identity Verification Required');
+        setLocationStatus('Please scan your face to confirm it is really you.');
     };
 
     useEffect(() => {
@@ -333,8 +332,8 @@ export const ScanQRCodePage = ({ setView, markAttendance, lectures, token }) => 
 
                     // Check if lecture has geofencing enabled
                     if (!lecture.latitude || !lecture.longitude) {
-                        // No geofencing for this lecture, proceed to biometrics
-                        await verifyIdentityAndMarkAttendance(lectureId, false);
+                        // No geofencing for this lecture, proceed to face auth
+                        startIdentityVerification(lectureId, false);
                         return;
                     }
 
@@ -357,7 +356,7 @@ export const ScanQRCodePage = ({ setView, markAttendance, lectures, token }) => 
 
                         if (withinGeofence) {
                             setScanResult(`Location verified! Proceeding to identity check...`);
-                            await verifyIdentityAndMarkAttendance(lectureId, true, distance, browserAccuracy);
+                            startIdentityVerification(lectureId, true, distance, browserAccuracy);
                         } else {
                             setScanResult(`❌ Location Verification Failed\n\nYou are ${formatDistance(distance)} away from the lecture.\n\nRequired: Within ${baseRadius} meters\n(Your GPS Accuracy: ±${Math.round(browserAccuracy)}m)\n\nPlease move closer to mark attendance.`);
                             setTimeout(() => setView('studentHome'), 5000);
@@ -405,10 +404,17 @@ export const ScanQRCodePage = ({ setView, markAttendance, lectures, token }) => 
                 )}
 
                 {scanResult ? (
-                    <div className="my-8 min-h-[250px] flex items-center justify-center">
-                        <p className="text-lg font-bold whitespace-pre-line" style={{
+                    <div className="my-8 min-h-[250px] flex flex-col items-center justify-center">
+                        <p className="text-lg font-bold whitespace-pre-line mb-6" style={{
                             color: scanResult.includes('✓') ? '#16a34a' : scanResult.includes('❌') ? '#dc2626' : '#059669'
                         }}>{scanResult}</p>
+                        
+                        {showFaceAuth && (
+                            <FaceCapture 
+                                onCapture={verifyFaceAndMarkAttendance} 
+                                buttonText="Verify My Identity"
+                            />
+                        )}
                     </div>
                 ) : (
                     // This div is the container where the camera view will be rendered
