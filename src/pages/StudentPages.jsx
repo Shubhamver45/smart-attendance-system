@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode'; // Import the new scanner package
 import { CalendarIcon, MapPinIcon, QrCodeIcon, CalendarDaysIcon } from '../components/Icons.jsx';
 import { getCurrentLocation, formatDistance, calculateDistance } from '../utils/geolocation.js';
-import { getCurrentLocation, formatDistance, calculateDistance } from '../utils/geolocation.js';
 
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
 
