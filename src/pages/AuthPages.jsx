@@ -10,7 +10,6 @@ import {
     GraduationCapIcon,
     ShieldIcon
 } from '../components/Icons.jsx';
-import { FaceCapture } from '../components/FaceCapture.jsx';
 
 // Reusable component for the form container
 // CORRECTED: Added responsive padding (p-6 for mobile, p-8 for desktop)
@@ -147,16 +146,6 @@ export const StudentRegisterPage = ({ setView, onRegister }) => {
                     <InputField id="email" label="Student Email" type="email" placeholder="Enter your email" icon={<MailIcon className="w-5 h-5" />} value={formData.email} onChange={handleChange} />
                     <InputField id="password" label="Password" type="password" placeholder="Create a password" icon={<LockIcon className="w-5 h-5" />} value={formData.password} onChange={handleChange} />
                     
-                    <div className="border-t border-slate-200 pt-4 mt-4">
-                        <p className="text-sm text-slate-500 font-semibold mb-3">Biometric Enrollment (Required)</p>
-                        <FaceCapture 
-                            onCapture={(embedding) => setFormData(prev => ({ ...prev, face_embedding: embedding }))} 
-                            buttonText="Register My Face"
-                        />
-                        {formData.face_embedding && (
-                            <p className="text-xs text-green-600 font-bold mt-2 text-center">✓ Biometric data secured</p>
-                        )}
-                    </div>
 
                     <div className="border-t border-slate-200 pt-4 mt-4">
                         <p className="text-sm text-slate-500 font-semibold mb-3">Emergency & Academic Contacts</p>
@@ -168,7 +157,7 @@ export const StudentRegisterPage = ({ setView, onRegister }) => {
                     </div>
                     <button 
                         type="submit" 
-                        disabled={isSubmitting || !formData.face_embedding} 
+                        disabled={isSubmitting} 
                         className="w-full bg-[#052659] text-white font-bold py-3 px-4 rounded-lg hover:bg-[#021024] transition-colors disabled:opacity-70 flex justify-center items-center gap-2"
                     >
                         {isSubmitting ? <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Creating...</> : 'Create Account'}
